@@ -113,7 +113,13 @@ void parameter_controller::set_config(tmm::parameter_tuple config)
     auto function = parameter_set_functions_.find(config.parameter_id);
     if (function != parameter_set_functions_.end())
     {
-        function->second(config.parameter_value);
+        int rt;
+        rt = function->second(config.parameter_value);
+        if (rt < 0)
+            {
+                logging::error("PC") << "set_parameter failed for pcp " << config.parameter_id;
+                logging::error("PC") << "error code: " << rt << std::strerror(abs(rt));
+            }
     }
     else
     {
@@ -134,7 +140,14 @@ void parameter_controller::unset_config(tmm::parameter_tuple config)
     auto function = parameter_unset_functions_.find(config.parameter_id);
     if (function != parameter_unset_functions_.end())
     {
-        function->second(config.parameter_value);
+        int rt;
+        rt = function->second(config.parameter_value);
+        if (rt < 0)
+            {
+                logging::warn("PC") << "unset_parameter failed for pcp " << config.parameter_id; 
+                logging::error("PC") << "error code: " << rt << std::strerror(abs(rt));
+            }
+
     }
     else
     {

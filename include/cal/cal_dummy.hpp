@@ -35,6 +35,7 @@ public:
     virtual std::vector<tmm::parameter_tuple> calibrate_region(std::uint32_t region_id) override;
     virtual std::vector<tmm::parameter_tuple> request_configuration(
         std::uint32_t region_id) override;
+    virtual bool keep_calibrating() override;
 };
 }
 }

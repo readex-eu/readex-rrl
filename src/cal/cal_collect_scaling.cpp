@@ -255,5 +255,10 @@ void cal_collect_scaling::calc_counter_values(std::uint32_t new_region_id,
 
     last_event = std::chrono::high_resolution_clock::now();
 }
+
+bool cal_collect_scaling::keep_calibrating()
+{
+    return true;
+}
 }
 } /* namespace reade_uncore */

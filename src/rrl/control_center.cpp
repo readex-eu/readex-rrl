@@ -142,7 +142,7 @@ void control_center::enter_region(struct SCOREP_Location *location,
             break;
     }
 
-    if (scorep::call::location_get_id(location) == 0)
+    if ((scorep::call::location_get_id(location) == 0) && (count_forks_joins == 0))
     {
         auto begin = std::chrono::high_resolution_clock::now();
         logging::trace("CC") << "call [RTS] for id: "
@@ -183,7 +183,7 @@ void control_center::exit_region(struct SCOREP_Location *location,
                          << " id: " << scorep::call::region_handle_get_id(regionHandle)
                          << " location: " << scorep::call::location_get_id(location);
 
-    if (scorep::call::location_get_id(location) == 0)
+    if ((scorep::call::location_get_id(location) == 0) && (count_forks_joins == 0))
     {
         auto begin = std::chrono::high_resolution_clock::now();
         /**
@@ -197,6 +197,45 @@ void control_center::exit_region(struct SCOREP_Location *location,
         invocation_duration[exit_region_i] += duration;
         invocation_count[exit_region_i]++;
         invocation_variance_x_2[exit_region_i] += duration.count() * duration.count();
+    }
+}
+
+/**
+ * called from threading instrumentation adapters before a thread team is forked, e.g., before an
+ *OpenMP parallel region
+ *
+ * @param location location which creates this event
+ *
+ * @param timestamp timestamp for this event
+ *
+ * @param paradigm threading paradigm
+**/
+void control_center::thread_fork_join_fork(
+    struct SCOREP_Location *location, std::uint64_t timestamp, SCOREP_ParadigmType paradigm)
+{
+    if (paradigm == SCOREP_PARADIGM_OPENMP)
+    {
+        count_forks_joins++;
+    }
+}
+
+/**
+ * called from threading instrumentation after a thread team is joined, e.g., after an OpenMP
+parallel region
+ *
+ * @param location location which creates this event
+ *
+ * @param timestamp timestamp for this event
+ *
+ * @param paradigm threading paradigm
+**/
+
+void control_center::thread_fork_join_join(
+    struct SCOREP_Location *location, std::uint64_t timestamp, SCOREP_ParadigmType paradigm)
+{
+    if (paradigm == SCOREP_PARADIGM_OPENMP)
+    {
+        count_forks_joins--;
     }
 }
 

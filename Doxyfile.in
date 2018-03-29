@@ -2121,7 +2121,7 @@ HAVE_DOT               = YES
 # Minimum value: 0, maximum value: 32, default value: 0.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_NUM_THREADS        = 0
+DOT_NUM_THREADS        = 1
 
 # When you want a differently looking font in the dot files that doxygen
 # generates you can specify the font name using DOT_FONTNAME. You need to make
@@ -2296,7 +2296,7 @@ DOT_PATH               =
 # command).
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOTFILE_DIRS           =
+DOTFILE_DIRS           = 
 
 # The MSCFILE_DIRS tag can be used to specify one or more directories that
 # contain msc files that are included in the documentation (see the \mscfile
@@ -2381,4 +2381,4 @@ GENERATE_LEGEND        = YES
 # The default value is: YES.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_CLEANUP            = YES
+DOT_CLEANUP            = NO

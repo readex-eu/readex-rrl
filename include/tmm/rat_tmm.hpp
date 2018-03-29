@@ -47,6 +47,9 @@ public:
 
     virtual std::unordered_map<int, phase_data_t> get_phase_data() noexcept override;
 
+    virtual bool has_changed() noexcept override;
+    virtual void set_changed(bool) noexcept override;
+
 private:
     tuning_model tm_;
     std::unordered_map<uint32_t, region_id> registered_regions_;

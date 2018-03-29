@@ -154,6 +154,7 @@ void dta_tmm::store_configuration(const std::vector<simple_callpath_element> &ca
             }
         }
     }
+    changed = true;
 }
 
 const std::vector<parameter_tuple> dta_tmm::get_current_rts_configuration(
@@ -212,6 +213,23 @@ std::unordered_map<int, phase_data_t> dta_tmm::get_phase_data() noexcept
     logging::error("DTA_TMM")
         << "called get_phase_data() during design time. This is not itended to happen.";
     return std::unordered_map<int, phase_data_t>();
+}
+
+bool dta_tmm::has_changed() noexcept
+{
+    if (changed)
+    {
+        changed = false;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+void dta_tmm::set_changed(bool val) noexcept
+{
+    changed = val;
 }
 }
 }

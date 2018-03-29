@@ -304,5 +304,9 @@ std::vector<tmm::parameter_tuple> cal_neural_net::request_configuration(uint32_t
     }
     return std::vector<tmm::parameter_tuple>();
 }
+bool cal_neural_net::keep_calibrating()
+{
+    return false;
+}
 }
 }

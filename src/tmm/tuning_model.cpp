@@ -9,7 +9,8 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/string.hpp>
 
-template <typename T> static inline T convert(const std::string &s)
+template <typename T>
+static inline T convert(const std::string &s)
 {
     T v;
     std::stringstream sstream;
@@ -27,59 +28,61 @@ struct identifier
 
 namespace cereal
 {
-
 /* cluster deserialization */
 
-template <class Archive> void
-load(Archive & archive, rrl::tmm::phases_in_cluster_t & phases)
+template <class Archive>
+void load(Archive &archive, rrl::tmm::phases_in_cluster_t &phases)
 {
     cereal::size_type size;
     archive(make_size_tag(size));
 
     int phase;
-    for (size_type n = 0; n < size; n++) {
+    for (size_type n = 0; n < size; n++)
+    {
         archive(phase);
         phases.insert(phase);
     }
 }
 
-template <class Archive> void
-load(Archive & archive, std::pair<std::string, std::pair<double, double>> & range)
+template <class Archive>
+void load(Archive &archive, std::pair<std::string, std::pair<double, double>> &range)
 {
     archive(make_nvp("feature", range.first));
     archive(make_nvp("start", range.second.first));
     archive(make_nvp("end", range.second.second));
 }
 
-template <class Archive> void
-load(Archive & archive, rrl::tmm::phase_identifier_range_t & ranges)
+template <class Archive>
+void load(Archive &archive, rrl::tmm::phase_identifier_range_t &ranges)
 {
     cereal::size_type size;
     archive(make_size_tag(size));
 
     std::pair<std::string, std::pair<double, double>> pair;
-    for (size_type n = 0; n < size; n++) {
+    for (size_type n = 0; n < size; n++)
+    {
         archive(pair);
         ranges.insert(pair);
     }
 }
 
-template <class Archive> void
-load(Archive & archive, std::pair<int, rrl::tmm::phase_data_t> & cluster)
+template <class Archive>
+void load(Archive &archive, std::pair<int, rrl::tmm::phase_data_t> &cluster)
 {
     archive(make_nvp("clusterid", cluster.first));
     archive(make_nvp("cluster_phases", cluster.second.first));
     archive(make_nvp("phase_ranges", cluster.second.second));
 }
 
-template <class Archive> void
-load(Archive & archive, std::unordered_map<int, rrl::tmm::phase_data_t> & clusters)
+template <class Archive>
+void load(Archive &archive, std::unordered_map<int, rrl::tmm::phase_data_t> &clusters)
 {
     cereal::size_type size;
     archive(make_size_tag(size));
 
-    std::pair<int, rrl::tmm::phase_data_t> pd;
-    for (size_type n = 0; n < size; n++) {
+    for (size_type n = 0; n < size; n++)
+    {
+        std::pair<int, rrl::tmm::phase_data_t> pd;
         archive(pd);
         clusters.insert(pd);
     }
@@ -87,14 +90,16 @@ load(Archive & archive, std::unordered_map<int, rrl::tmm::phase_data_t> & cluste
 
 /* identifier deserialization */
 
-template <class Archive> void load(Archive &archive, identifier &id)
+template <class Archive>
+void load(Archive &archive, identifier &id)
 {
     archive(make_nvp("type", id.type));
     archive(make_nvp("name", id.name));
     archive(make_nvp("value", id.value));
 }
 
-template <class Archive> void load(Archive &archive, rrl::tmm::identifier_set &ids)
+template <class Archive>
+void load(Archive &archive, rrl::tmm::identifier_set &ids)
 {
     cereal::size_type size;
     archive(make_size_tag(size));
@@ -145,14 +150,16 @@ void load(Archive &archive, std::unordered_map<uint64_t, rrl::tmm::identifier_se
 
 /* region deserialization */
 
-template <class Archive> void load(Archive &archive, rrl::tmm::region_id &rid)
+template <class Archive>
+void load(Archive &archive, rrl::tmm::region_id &rid)
 {
     archive(make_nvp("file", rid.file));
     archive(make_nvp("line", rid.line));
     archive(make_nvp("name", rid.name));
 }
 
-template <class Archive> void load(Archive &archive, std::pair<uint64_t, rrl::tmm::region_id> &pair)
+template <class Archive>
+void load(Archive &archive, std::pair<uint64_t, rrl::tmm::region_id> &pair)
 {
     archive(make_nvp("id", pair.first));
     archive(make_nvp("file", pair.second.file));
@@ -185,7 +192,8 @@ void load(Archive &archive, std::pair<rrl::tmm::region_id, rrl::tmm::identifier_
     archive(make_nvp("identifiers", pair.second));
 }
 
-template <class Archive> void load(Archive &archive, std::vector<rrl::tmm::callpath_element> &cp)
+template <class Archive>
+void load(Archive &archive, std::vector<rrl::tmm::callpath_element> &cp)
 {
     cereal::size_type size;
     archive(make_size_tag(size));
@@ -215,10 +223,10 @@ void load(Archive &archive,
 
 template <class Archive>
 void load(Archive &archive,
-    std::vector<std::tuple<std::vector<rrl::tmm::callpath_element>,
-        uint64_t, uint64_t, uint64_t, double>> &rtss)
+    std::vector<
+        std::tuple<std::vector<rrl::tmm::callpath_element>, uint64_t, uint64_t, uint64_t, double>>
+        &rtss)
 {
-
     cereal::size_type size;
     archive(make_size_tag(size));
 
@@ -226,9 +234,8 @@ void load(Archive &archive,
     rtss.reserve(static_cast<std::size_t>(size));
     for (size_type n = 0; n < size; n++)
     {
-        std::tuple<
-            std::vector<rrl::tmm::callpath_element>, uint64_t, uint64_t, uint64_t, double
-        > tpl;
+        std::tuple<std::vector<rrl::tmm::callpath_element>, uint64_t, uint64_t, uint64_t, double>
+            tpl;
         archive(tpl);
         rtss.push_back(tpl);
     }
@@ -236,7 +243,8 @@ void load(Archive &archive,
 
 /* configuration deserialization */
 
-template <class Archive> void load(Archive &archive, std::pair<std::string, int> &tp)
+template <class Archive>
+void load(Archive &archive, std::pair<std::string, int> &tp)
 {
     archive(make_nvp("id", tp.first));
     archive(make_nvp("value", tp.second));
@@ -289,27 +297,24 @@ namespace rrl
 {
 namespace tmm
 {
-
-void
-tuning_model::store_configuration(
-    const std::vector<callpath_element> & callpath,
-    const std::vector<parameter_tuple> & configuration,
-    const std::chrono::milliseconds & exectime)
+void tuning_model::store_configuration(const std::vector<callpath_element> &callpath,
+    const std::vector<parameter_tuple> &configuration,
+    const std::chrono::milliseconds &exectime)
 {
     configuration_t config;
-    for (const auto & pt : configuration)
+    for (const auto &pt : configuration)
         config[pt.parameter_id] = pt.parameter_value;
 
     identifier_set iset;
     std::unique_ptr<inputidmap> map(new inputidmap({{iset, config}}));
     scenarios_[callpath] = std::move(map);
-    exectimes_[callpath] = exectime.count();
+    exectimes_[callpath] = exectime;
 }
 
-const std::unordered_map<identifier_set, configuration_t> *
-tuning_model::configurations(const std::vector<callpath_element> & cp) const
+const std::unordered_map<identifier_set, configuration_t> *tuning_model::configurations(
+    const std::vector<callpath_element> &cp) const
 {
-    const auto & it = scenarios_.find(cp);
+    const auto &it = scenarios_.find(cp);
     return it != scenarios_.end() ? it->second.get() : nullptr;
 }
 
@@ -318,9 +323,8 @@ void tuning_model::deserialize(std::istream &is)
     std::unordered_map<uint64_t, rrl::tmm::region_id> regions;
     std::unordered_map<uint64_t, rrl::tmm::identifier_set> iids;
     std::unordered_map<uint64_t, std::unordered_map<std::string, int>> scenarios;
-    std::vector<
-        std::tuple<std::vector<callpath_element>, uint64_t, uint64_t, uint64_t, double>
-    > rtss;
+    std::vector<std::tuple<std::vector<callpath_element>, uint64_t, uint64_t, uint64_t, double>>
+        rtss;
 
     cereal::JSONInputArchive archive(is);
     archive(cereal::make_nvp("clusters", clusters_));
@@ -332,7 +336,7 @@ void tuning_model::deserialize(std::istream &is)
     /* validate tuning model */
 
     /* ensure every rts points to a valid region, scenario, and iid */
-    for (const auto & tpl : rtss)
+    for (const auto &tpl : rtss)
     {
         if (regions.find(std::get<1>(tpl)) == regions.end() ||
             scenarios.find(std::get<2>(tpl)) == scenarios.end() ||
@@ -347,27 +351,30 @@ void tuning_model::deserialize(std::istream &is)
         throw std::runtime_error("Invalid tuning model.");
 
     auto root = std::get<0>(rtss.front()).front();
-    for (const auto & tpl : rtss) {
-        auto & cp = std::get<0>(tpl);
+    for (const auto &tpl : rtss)
+    {
+        auto &cp = std::get<0>(tpl);
         if (cp.empty() || cp.front() != root)
             throw std::runtime_error("Invalid tuning model.");
     }
 
     /* update class attributes */
     std::unordered_map<rrl::tmm::region_id, size_t> nidentifiers;
-    for (const auto & tpl : rtss) {
-        auto & cp = std::get<0>(tpl);
+    for (const auto &tpl : rtss)
+    {
+        auto &cp = std::get<0>(tpl);
         auto rid = std::get<1>(tpl);
         auto scnrid = std::get<2>(tpl);
         auto iid = std::get<3>(tpl);
         auto exectime = std::get<4>(tpl);
 
         RRL_DEBUG_ASSERT(iids.find(iid) != iids.end());
-        auto & iidset = iids[iid];
+        auto &iidset = iids[iid];
 
         configuration_t config;
         auto scnr = *scenarios.find(scnrid);
-        for (const auto & pt : scnr.second) {
+        for (const auto &pt : scnr.second)
+        {
             size_t pid = std::hash<std::string>{}(pt.first);
             config[pid] = pt.second;
         }
@@ -379,16 +386,20 @@ void tuning_model::deserialize(std::istream &is)
             RRL_DEBUG_ASSERT(nidentifiers[regions[rid]] == cp[cp.size() - 1].ids().size());
 
         /* set scenarios */
-        if (scenarios_.find(cp) == scenarios_.end()) {
+        if (scenarios_.find(cp) == scenarios_.end())
+        {
             std::unique_ptr<inputidmap> map(new inputidmap({{iidset, config}}));
             scenarios_[cp] = std::move(map);
-        } else {
+        }
+        else
+        {
             RRL_DEBUG_ASSERT(scenarios_[cp]->find(iidset) == scenarios_[cp]->end());
             (*scenarios_[cp])[iidset] = config;
         }
 
         /* set execution time */
-        exectimes_[cp] = exectime;
+        auto exec_seconds = std::chrono::duration<double>(exectime);
+        exectimes_[cp] = std::chrono::duration_cast<std::chrono::milliseconds>(exec_seconds);
     }
     regions_ = regions;
     nidentifiers_ = nidentifiers;

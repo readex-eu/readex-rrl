@@ -6,6 +6,7 @@
 #include <tmm/region.hpp>
 #include <tmm/tuning_model_manager.hpp>
 
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -15,7 +16,6 @@ namespace rrl
 {
 namespace tmm
 {
-
 class parameter_tuple;
 
 typedef std::vector<callpath_element> callpath;
@@ -35,8 +35,7 @@ public:
         return false;
     }
 
-    inline size_t
-    nidentifiers(const region_id & rid) const
+    inline size_t nidentifiers(const region_id &rid) const
     {
         RRL_DEBUG_ASSERT(has_region(rid));
         return nidentifiers_.at(rid);
@@ -47,23 +46,22 @@ public:
         return scenarios_.find(cp) != scenarios_.end();
     }
 
-    inline double
-    exectime(const std::vector<callpath_element> & cp) const noexcept
+    inline std::chrono::milliseconds exectime(const std::vector<callpath_element> &cp) const
+        noexcept
     {
         RRL_DEBUG_ASSERT(has_rts(cp));
         return exectimes_.at(cp);
     }
 
-    const std::unordered_map<identifier_set, configuration_t> *
-    configurations(const std::vector<callpath_element> & cp) const;
+    const std::unordered_map<identifier_set, configuration_t> *configurations(
+        const std::vector<callpath_element> &cp) const;
 
     inline size_t ncallpaths() const noexcept
     {
         return scenarios_.size();
     }
 
-    inline size_t
-    ninputidsets(const std::vector<callpath_element> & cp) const noexcept
+    inline size_t ninputidsets(const std::vector<callpath_element> &cp) const noexcept
     {
         if (scenarios_.find(cp) != scenarios_.end())
             return scenarios_.at(cp)->size();
@@ -75,23 +73,18 @@ public:
 
     std::string to_dot() const;
 
-    std::string
-    to_matrix() const;
+    std::string to_matrix() const;
 
-    bool
-    is_root(const callpath_element & cpe) const noexcept;
+    bool is_root(const callpath_element &cpe) const noexcept;
 
-    inline const std::unordered_map<int, phase_data_t> &
-    clusters() const noexcept
+    inline const std::unordered_map<int, phase_data_t> &clusters() const noexcept
     {
         return clusters_;
     }
 
-    void
-    store_configuration(
-        const std::vector<callpath_element> & callpath,
-        const std::vector<parameter_tuple> & configuration,
-        const std::chrono::milliseconds & exectime);
+    void store_configuration(const std::vector<callpath_element> &callpath,
+        const std::vector<parameter_tuple> &configuration,
+        const std::chrono::milliseconds &exectime);
 
 private:
     std::unordered_map<int, phase_data_t> clusters_;
@@ -102,7 +95,7 @@ private:
     std::unordered_map<uint64_t, rrl::tmm::region_id> regions_;
     std::unordered_map<rrl::tmm::region_id, size_t> nidentifiers_;
     std::unordered_map<callpath, std::unique_ptr<inputidmap>> scenarios_;
-    std::unordered_map<callpath, double> exectimes_;
+    std::unordered_map<callpath, std::chrono::milliseconds> exectimes_;
 };
 }
 }

@@ -41,21 +41,31 @@ static int test(const std::string &file_path)
     assert(tm.has_rts(cp2));
     assert(tm.has_rts(cp3));
 
-    assert(tm.exectime({{main, {}}, {r0, {ids0}}}) == 10.0);
-    assert(tm.exectime({{main, {}}, {r1, {ids1}}}) == 9.0);
-    assert(tm.exectime({{main, {}}, {reg, {ids1}}, {r1, {ids1}}}) == 8.0);
+    assert(
+        tm.exectime({{main, {}}, {r0, {ids0}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(10.0)));
+    assert(
+        tm.exectime({{main, {}}, {r1, {ids1}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(9.0)));
+    assert(
+        tm.exectime({{main, {}}, {reg, {ids1}}, {r1, {ids1}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(8.0)));
 
     assert(tm.nidentifiers(r0) == 1);
     assert(tm.nidentifiers(r1) == 1);
 
-    auto & pd = tm.clusters();
-    assert(pd.size() == 1);
+    auto &pd = tm.clusters();
+    assert(pd.size() == 2);
 
-    auto cid = (*pd.begin()).first;
-    assert(cid == 23);
+    auto cluster2 = pd.find(2);
+    assert(cluster2 != pd.end());
+    auto phases = cluster2->second.first;
+    assert(phases.size() == 3);
 
-    auto phases = (*pd.begin()).second.first;
-    auto ranges = (*pd.begin()).second.second;
+    auto cluster23 = pd.find(23);
+    assert(cluster23 != pd.end());
+    phases = cluster23->second.first;
+    auto ranges = cluster23->second.second;
     assert(phases.size() == 3);
     assert(ranges.size() == 1);
 

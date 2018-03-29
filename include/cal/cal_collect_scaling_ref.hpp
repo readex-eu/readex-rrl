@@ -47,6 +47,7 @@ public:
 
     virtual std::vector<tmm::parameter_tuple> request_configuration(
         std::uint32_t region_id) override;
+    virtual bool keep_calibrating() override;
 
 private:
     bool initialised;

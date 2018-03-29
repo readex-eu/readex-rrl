@@ -89,7 +89,7 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
 	To load ATPS, value should be set equal to 'ATP/<atp_name>' 
 	where, atp_name is the name of the ATP. The prefix 'ATP/' is required to recognize the ATP.
 	For the hardware and software tuning parameters, names of the PCPs are used.
-	For example: SCOREP_METRIC_SCOREP_SUBSTRATE_RRL = 'ATP/OpenMPTP, cpu_freq'
+	For example: SCOREP_METRIC_SCOREP_SUBSTRATE_RRL = 'OpenMPTP, cpu_freq'
 	
 * `SCOREP_RRL_SIGNIFICANT_DURATION_MS` defines the duration of a significant region in milliseconds (integer required). Default 100 ms.
     RTS which have a predefind dration below this threshold will not get a new configuration.    

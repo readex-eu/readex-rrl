@@ -75,8 +75,8 @@ typedef struct rrl_tuning_action_info
 {
     char *name;                           /**< Tuning action name */
     int (*current_config)();              /**< get current configuration*/
-    void (*enter_region_set_config)(int); /**< Function called at enter region event*/
-    void (*exit_region_set_config)(int);  /**< Function called at exit region event*/
+    int (*enter_region_set_config)(int); /**< Function called at enter region event*/
+    int (*exit_region_set_config)(int);  /**< Function called at exit region event*/
 } rrl_tuning_action_info;
 
 /**

@@ -49,14 +49,12 @@
  */
 namespace rrl
 {
-
 /** This class is the central class which gets the information from the interface
  * and passes them to the right component.
  *
  */
 class control_center
 {
-
 public:
     control_center();
     ~control_center();
@@ -72,6 +70,12 @@ public:
         std::uint64_t timestamp,
         SCOREP_RegionHandle regionHandle,
         std::uint64_t *metricValues);
+
+    void thread_fork_join_fork(
+        struct SCOREP_Location *location, std::uint64_t timestamp, SCOREP_ParadigmType paradigm);
+
+    void thread_fork_join_join(
+        struct SCOREP_Location *location, std::uint64_t timestamp, SCOREP_ParadigmType paradigm);
 
     void register_region(SCOREP_AnyHandle handle, SCOREP_HandleType type);
 
@@ -160,6 +164,8 @@ private:
     std::string hostname; /**< the hostname of the device we are curently on */
 
     std::mutex location_loock;
+
+    int count_forks_joins = 0;
 };
 }
 

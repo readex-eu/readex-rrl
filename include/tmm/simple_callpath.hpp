@@ -14,7 +14,6 @@ namespace rrl
 {
 namespace tmm
 {
-
 /** This element represents an element form a simple call path.
  *
  * Each element consists of the region_id to identify the region,
@@ -33,15 +32,14 @@ struct simple_callpath_element
      *
      */
     simple_callpath_element(std::uint32_t region_id, identifier_set id_set, bool calibrate = false)
-        : region_id(region_id), id_set(id_set), config_set(false), calibrate(calibrate)
+        : region_id(region_id), id_set(id_set)
     {
     }
 
     /** Constructs an empty simple_callpath_element
      *
      */
-    simple_callpath_element()
-        : region_id(0), id_set(identifier_set()), config_set(false), calibrate(false)
+    simple_callpath_element() : region_id(0), id_set(identifier_set())
     {
     }
 
@@ -59,15 +57,11 @@ struct simple_callpath_element
 
     std::uint32_t region_id;
     identifier_set id_set;
-    bool config_set;
-    bool calibrate;
 };
 
 inline std::ostream &operator<<(std::ostream &s, const simple_callpath_element &elem)
 {
-    s << "Region ID: " << elem.region_id << "\nID's:\n"
-      << elem.id_set << "Callibrate? " << (elem.calibrate ? std::string("YES") : std::string("NO"))
-      << "\nconfiguration set: " << (elem.config_set ? std::string("YES") : std::string("NO"));
+    s << "Region ID: " << elem.region_id << "\nID's:\n" << elem.id_set;
     return s;
 }
 
@@ -84,8 +78,8 @@ inline std::ostream &operator<<(std::ostream &s, const std::vector<simple_callpa
 
 namespace std
 {
-
-template <> struct hash<rrl::tmm::simple_callpath_element>
+template <>
+struct hash<rrl::tmm::simple_callpath_element>
 {
     size_t inline operator()(const rrl::tmm::simple_callpath_element &scpe) const
     {
@@ -95,7 +89,8 @@ template <> struct hash<rrl::tmm::simple_callpath_element>
     }
 };
 
-template <> struct hash<std::vector<rrl::tmm::simple_callpath_element>>
+template <>
+struct hash<std::vector<rrl::tmm::simple_callpath_element>>
 {
     size_t inline operator()(const std::vector<rrl::tmm::simple_callpath_element> &scp) const
     {

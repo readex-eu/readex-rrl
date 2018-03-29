@@ -49,6 +49,7 @@ public:
 
     virtual std::vector<tmm::parameter_tuple> calibrate_region(uint32_t) override;
     virtual std::vector<tmm::parameter_tuple> request_configuration(uint32_t) override;
+    virtual bool keep_calibrating() override;
 
 private:
     bool collect_counters = false;

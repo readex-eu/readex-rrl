@@ -47,7 +47,6 @@
 
 namespace scorep
 {
-
 static size_t plugin_id;
 static const SCOREP_SubstratePluginCallbacks *calls;
 
@@ -119,7 +118,7 @@ int ipc_get_rank()
 
 int ipc_get_size()
 {
-	return scorep::calls->SCOREP_Ipc_GetSize();
+    return scorep::calls->SCOREP_Ipc_GetSize();
 }
 
 namespace sampling_set
@@ -183,11 +182,10 @@ SCOREP_MetricSourceType get_source_type(SCOREP_MetricHandle handle)
     return scorep::calls->SCOREP_MetricHandle_GetSourceType(handle);
 }
 }
-} // namespace call
+}  // namespace call
 
 namespace callback
 {
-
 namespace event
 {
 /** The following callbacks are for calls from Score-P to the rrl
@@ -234,6 +232,66 @@ static void exit_regionCb(struct SCOREP_Location *location,
     catch (std::exception &e)
     {
         rrl::exception::print_uncaught_exception(e, "exit_regionCb");
+        return;
+    }
+}
+
+/**
+ * called from threading instrumentation adapters before a thread team is forked, e.g., before an
+ * OpenMP parallel region
+ *
+ * @param location location which creates this event
+ *
+ * @param timestamp timestamp for this event
+ *
+ * @param paradigm threading paradigm
+ *
+ * @param nRequestedThreads number of threads to be forked.
+ *  Note that this does not necessarily represent actual threads
+ *  but threads can also be reused, e..g, in OpenMP runtimes.
+ *
+ * @param forkSequenceCount an increasing number, unique for each process that
+ *   allows to identify a parallel region
+ *
+ */
+void thread_fork_join_forkCb(struct SCOREP_Location *location,
+    uint64_t timestamp,
+    SCOREP_ParadigmType paradigm,
+    uint32_t nRequestedThreads,
+    uint32_t forkSequenceCount)
+{
+    try
+    {
+        rrl::control_center::instance().thread_fork_join_fork(location, timestamp, paradigm);
+    }
+    catch (std::exception &e)
+    {
+        rrl::exception::print_uncaught_exception(e, "thread_fork_join_forkCb");
+        return;
+    }
+}
+
+/**
+ * called from threading instrumentation after a thread team is joined, e.g., after an OpenMP
+ * parallel region
+ *
+ * @param location location which creates this event
+ *
+ * @param timestamp timestamp for this event
+ *
+ * @param paradigm threading paradigm
+ *
+ */
+void thread_fork_join_joinCb(
+    struct SCOREP_Location *location, uint64_t timestamp, SCOREP_ParadigmType paradigm)
+{
+    try
+    {
+        rrl::control_center::instance().thread_fork_join_join(location, timestamp, paradigm);
+    }
+    catch (std::exception &e)
+    {
+        rrl::exception::print_uncaught_exception(e, "thread_fork_join_joinCb");
         return;
     }
 }
@@ -383,7 +441,7 @@ static void user_metric_doubleCb(struct SCOREP_Location *location,
     }
 }
 
-} // namespce event
+}  // namespce event
 
 /*Management Callbacks
  *
@@ -391,7 +449,6 @@ static void user_metric_doubleCb(struct SCOREP_Location *location,
  */
 namespace management
 {
-
 static void new_definition_handle(SCOREP_AnyHandle handle, SCOREP_HandleType type)
 {
     try
@@ -510,6 +567,15 @@ static uint32_t get_event_functions(
     registered_functions[SCOREP_EVENT_EXIT_REGION] =
         (SCOREP_Substrates_Callback) scorep::callback::event::exit_regionCb;
 
+    registered_functions[SCOREP_EVENT_THREAD_FORK_JOIN_FORK] =
+        (SCOREP_Substrates_Callback) scorep::callback::event::thread_fork_join_forkCb;
+
+    registered_functions[SCOREP_EVENT_THREAD_FORK_JOIN_JOIN] =
+        (SCOREP_Substrates_Callback) scorep::callback::event::thread_fork_join_joinCb;
+
+    registered_functions[SCOREP_EVENT_EXIT_REGION] =
+        (SCOREP_Substrates_Callback) scorep::callback::event::exit_regionCb;
+
     registered_functions[SCOREP_EVENT_GENERIC_COMMAND] =
         (SCOREP_Substrates_Callback) scorep::callback::event::generic_commandCb;
 
@@ -559,11 +625,11 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
     }
     scorep::calls = callbacks;
 }
-} // namespace management
+}  // namespace management
 
-} // namespace callback
+}  // namespace callback
 
-} // namespace scorep
+}  // namespace scorep
 
 extern "C" {
 

@@ -14,6 +14,21 @@
                     "end": 42.0
                 }
             ]
+        },
+        {
+            "clusterid": 2,
+            "cluster_phases": [
+                4,
+                5,
+                6
+            ],
+            "phase_ranges": [
+                {
+                    "feature": "range2",
+                    "start": 1.0,
+                    "end": 42.0
+                }
+            ]
         }
     ],
     "iids": [

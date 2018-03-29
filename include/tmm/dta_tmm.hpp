@@ -59,6 +59,9 @@ public:
 
     virtual std::unordered_map<int, phase_data_t> get_phase_data() noexcept override;
 
+    virtual bool has_changed() noexcept override;
+    virtual void set_changed(bool) noexcept override;
+
 private:
     std::unordered_map<std::vector<simple_callpath_element>, std::vector<parameter_tuple>>
         configurations_;
@@ -68,6 +71,7 @@ private:
 
     bool check_for_root = true;
     calibration_type cal_type;
+    bool changed = false;
 };
 }
 }

@@ -61,9 +61,9 @@ private:
     void set_config(tmm::parameter_tuple config);
     void unset_config(tmm::parameter_tuple config);
 
-    using parameter_set_function = void (*)(
+    using parameter_set_function = int (*)(
         int); /**< function definition for pcp enter_region_set_config() function*/
-    using parameter_unset_function = void (*)(
+    using parameter_unset_function = int (*)(
         int); /**< function definition for pcp exit_region_set_config() function*/
     using parameter_get_current_config = int (*)();
     /**< function definition for pcp current_config() function*/

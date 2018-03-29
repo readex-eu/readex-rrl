@@ -11,6 +11,10 @@
 #include <memory>
 #include <string>
 
+#include "call_tree/base_node.hpp"
+#include "call_tree/base_node.hpp"
+#include "call_tree/region_node.hpp"
+
 namespace rrl
 {
 /** rts_handler maintains the rts's.
@@ -18,6 +22,7 @@ namespace rrl
  * It gets a region_id from Score-P and maintains a callpath using this
  * information.
  **/
+
 class rts_handler
 {
 public:
@@ -47,7 +52,9 @@ private:
 
     parameter_controller &pc_; /**< holds the \ref parameter_controller */
 
-    std::vector<tmm::simple_callpath_element> callpath_; /**< callpath out of region id's */
+    std::unique_ptr<call_tree::base_node> call_tree_;
+    call_tree::base_node *current_calltree_elem_;
+
     std::unordered_map<std::string, std::string>
         input_identifiers_; /**< collects the input identifiers given durning startup */
     std::hash<std::string> user_parameter_hash_; /**< hashfunction for the user parameters */
@@ -55,6 +62,7 @@ private:
     tmm::region_status region_status_;
 
     void load_config();
+    void parse_input_identifier_file(const std::string &input_id_file);
 };
 }
 

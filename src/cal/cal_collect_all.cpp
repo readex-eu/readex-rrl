@@ -568,5 +568,10 @@ std::vector<tmm::parameter_tuple> cal_collect_all::request_configuration(uint32_
 {
     return std::vector<tmm::parameter_tuple>();
 }
+
+bool cal_collect_all::keep_calibrating()
+{
+    return true;
+}
 }
 }  // namespace rrl

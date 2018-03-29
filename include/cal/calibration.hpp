@@ -23,7 +23,6 @@ namespace rrl
 {
 namespace cal
 {
-
 namespace add_cal_info
 {
 enum region_event
@@ -55,12 +54,11 @@ public:
 
     /** This Function starts calibration for a region.
      *
-     * After calibration the result can be requested bz calling \ref request_configuration.
      * The return value can be used by the calibration to evaluate new configurations, and if they
      * are any good.
      *
-     * TODO: We need to be able to kick of the calibration when a certain region becomes more
-     * additional Identifiers than expected.
+     * Once keep_calibrating() returns fasle, the result of the calibration can be requested by
+     * calling request_configuration().
      *
      * @param region_id region id of the region for which the new configruation shall be applied.
      * @return the configuration to be applied
@@ -70,12 +68,20 @@ public:
 
     /** This funktion returns the configuration for a calbrated region.
      *
+     * This function can be called after keep_calibrating() returns false.
      * The returned configuration is supposed to be sotred by the \ref tuning_model_manager.
      *
      * @param region_id region id of the region for which the new configruation shall be stored.
      * @return the configuration to be stored
      */
     virtual std::vector<tmm::parameter_tuple> request_configuration(std::uint32_t region_id) = 0;
+
+    /** tells the rts handler that the calibration is not done yet. Therefore no result can be
+     * requested. Moreover another call to calibrate_region() is neccessary.
+     *
+     * @return true if further calibration is needed, false otherwise.
+     */
+    virtual bool keep_calibrating() = 0;
 };
 
 std::shared_ptr<calibration> get_calibration(

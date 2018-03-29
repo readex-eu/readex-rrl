@@ -48,5 +48,9 @@ std::vector<tmm::parameter_tuple> cal_dummy::request_configuration(std::uint32_t
     result.push_back(uncore_freq);
     return result;
 }
-} // namespace cal
-} // namespace rrl
+bool cal_dummy::keep_calibrating()
+{
+    return false;
+}
+}  // namespace cal
+}  // namespace rrl

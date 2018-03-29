@@ -28,7 +28,11 @@ rts_handler::rts_handler(
       tmm_(tmm),
       cal_(cal),
       pc_(parameter_controller::instance()),
+      call_tree_(std::make_unique<call_tree::region_node>(
+          nullptr, call_tree::node_info(0, call_tree::node_type::root))),
+      current_calltree_elem_(call_tree_.get()),
       region_status_(tmm::insignificant)
+
 {
     logging::debug("RTS") << " initializing";
 
@@ -53,68 +57,7 @@ rts_handler::rts_handler(
     auto input_id_file = rrl::environment::get("INPUT_IDENTIFIER_SPEC_FILE", "");
     if (!input_id_file.empty())
     {
-        std::ifstream input_id_file_(input_id_file);
-        if (!input_id_file_.is_open())
-        {
-            if (input_id_file_.fail())
-            {
-                logging::error("RTS") << "Could not open Input Identifer File: " << strerror(errno);
-            }
-            else
-            {
-                logging::error("RTS") << "Could not open Input Identifer File";
-            }
-        }
-        json input_id;
-        input_id_file_ >> input_id;
-
-        for (json::iterator it = input_id.begin(); it != input_id.end(); ++it)
-        {
-            if (it.key() == "collect_num_threads")
-            {
-                if (it.value().is_boolean() && it.value().get<bool>())
-                {
-                    try
-                    {
-                        auto omp_get_max_threads =
-                            nitro::dl::dl(nitro::dl::self).load<int(void)>("omp_get_max_threads");
-                        auto num_threads = omp_get_max_threads();
-                        input_identifiers_["threads"] = std::to_string(num_threads);
-                        logging::debug("RTS") << "Added Input Identifier \"threads\" with value \""
-                                              << num_threads << "\"";
-                    }
-                    catch (nitro::dl::exception &e)
-                    {
-                        logging::debug("RTS")
-                            << "could not find \"omp_get_max_threads\". Reason:" << e.what();
-                    }
-                }
-                continue;
-            }
-            if (it.key() == "collect_num_processes")
-            {
-                if (it.value().is_boolean() && it.value().get<bool>())
-                {
-                    int size = scorep::call::ipc_get_size();
-                    input_identifiers_["processes"] = std::to_string(size);
-                    logging::debug("RTS")
-                        << "Added Input Identifier \"processes\" with value \"" << size << "\"";
-                }
-                continue;
-            }
-            if (it.value().is_string())
-            {
-                input_identifiers_[it.key()] = it.value().get<std::string>();
-                logging::debug("RTS")
-                    << "Added Input Identifier \"" << it.key() << "\" with value \""
-                    << it.value().get<std::string>() << "\"";
-            }
-            else
-            {
-                logging::warn("RTS")
-                    << "Canno't parse key \"" << it.key() << "\". Value is not a string";
-            }
-        }
+        parse_input_identifier_file(input_id_file);
     }
 }
 
@@ -141,86 +84,59 @@ rts_handler::~rts_handler()
  * can request the excecution time. The execution time again indicate if a region needs
  * recallibration. However this is currently not implemented.
  *
- * TODO: Rename the function as the name is not right anymore.
  *
  */
 void rts_handler::load_config()
 {
-    logging::trace("RTS") << "load_config";
-    /* handle known significant regions
-     */
-    if (region_status_ == tmm::significant)
+    if (tmm_->has_changed())
     {
-        if (tmm_->get_region_identifiers(callpath_.back().region_id) ==
-            callpath_.back().id_set.size())
+        call_tree_->reset_state();
+    }
+    if (current_calltree_elem_->info.state == call_tree::node_state::unknown)
+    {
+        if (tmm_->is_significant(current_calltree_elem_->info.region_id) == tmm::significant)
         {
-            auto configs = tmm_->get_current_rts_configuration(callpath_, input_identifiers_);
-            if (configs.size() > 0)
+            auto call_path = current_calltree_elem_->build_callpath();
+            current_calltree_elem_->set_configuration(
+                tmm_->get_current_rts_configuration(call_path, input_identifiers_));
+            if (current_calltree_elem_->get_configuration().size() != 0)
             {
-                if (tmm_->get_exectime(callpath_) >= significant_duration)
-                {
-                    pc_.set_parameters(configs);
-                    /* In theory each region has one enter and one exit. If a region has additional
-                     * identifiers, it is supposed to set the config when the last additional
-                     * identifier is loaded. However it is possible, that a region has different
-                     * additional identifers that load different configs. To be sure that this cases
-                     * does not occure, we do the assertion here. If we change this assumption we
-                     * have to change the implemetation here and for the exit regions.
-                     */
-                    assert(callpath_.back().config_set == false);
-                    callpath_.back().config_set = true;
-                }
+                /** Workaround. There is an assertion that the callpath is in the TM, what is not
+                 * neccessary the case. The node measurs its duration itslef.
+                 **/
+                current_calltree_elem_->info.duration = tmm_->get_exectime(call_path);
             }
-            else
-            {
-                if (tmm_->get_calibration_type() != tmm::none)
-                {
-                    logging::trace("RTS")
-                        << "didn't get a configuration but all additional identifiers "
-                           "are collected. Starting calibration.";
-                    callpath_.back().calibrate = true;
-                }
-            }
+            current_calltree_elem_->info.state = call_tree::node_state::known;
         }
-        else if (tmm_->get_region_identifiers(callpath_.back().region_id) >
-                 callpath_.back().id_set.size())
+        else
         {
-            logging::warn("RTS") << "got more additional ID's than expected. Got: "
-                                 << callpath_.back().id_set.size() << " expected :"
-                                 << tmm_->get_region_identifiers(callpath_.back().region_id)
-                                 << "\nWe currently do not deal with this situation. However, you "
-                                    "can rerun DTA to make the TM aware of the new additional ID's";
+            current_calltree_elem_->info.state = call_tree::node_state::measure_duration;
+            current_calltree_elem_->start_measurment();
         }
     }
 
-    /** Calibrate when the region is unkown.
-     *
-     * How to work with additional identifiers (e.g. SCOREP_USER_PARAMETERS) that are in unknown
-     * regions?
-     */
-    if ((tmm_->get_calibration_type() != tmm::none) && (region_status_ == tmm::unknown))
+    if (current_calltree_elem_->info.state == call_tree::node_state::known)
     {
-        callpath_.back().calibrate = true;
-    }
-
-    /** We can be sure, that at this point no configuration is set by the TMM. So we can set the
-     * config requested from the CAL.
-     */
-    if (callpath_.back().calibrate)
-    {
-        auto configs = cal_->calibrate_region(callpath_.back().region_id);
-        if (configs.size() > 0)
+        if ((current_calltree_elem_->get_configuration().size() > 0) &&
+            (current_calltree_elem_->info.duration > significant_duration))
         {
-            pc_.set_parameters(configs);
-            /* In theory each region has one enter and one exit. If a region has additional
-             * identifiers, it is supposed to set the config when the last additional identifier
-             * is loaded. However it is possible, that a region has different additional
-             * identifers that load different configs. To be sure that this cases does not
-             * occure, we do the assertion here. If we change this assumption we have to change
-             * the implemetation here and for the exit regions.
-             */
-            assert(callpath_.back().config_set == false);
-            callpath_.back().config_set = true;
+            pc_.set_parameters(current_calltree_elem_->get_configuration());
+            current_calltree_elem_->info.configs_set++;
+        }
+    }
+    else if (current_calltree_elem_->info.state == call_tree::node_state::calibrate)
+    {
+        /* If the parent node decided to calibrate, we better don't. Similar if the parente has not
+         * decided yet and is still in measrument.
+         *
+         */
+        if ((current_calltree_elem_->parent_->info.state != call_tree::node_state::calibrate) and
+            (current_calltree_elem_->parent_->info.state !=
+                call_tree::node_state::measure_duration))
+        {
+            auto conf = cal_->calibrate_region(current_calltree_elem_->info.region_id);
+            pc_.set_parameters(current_calltree_elem_->get_configuration());
+            current_calltree_elem_->info.configs_set++;
         }
     }
 }
@@ -259,9 +175,7 @@ void rts_handler::enter_region(uint32_t region_id, SCOREP_Location *locationData
     }
     logging::trace("RTS") << "is_inside_root = true";
 
-    callpath_.push_back(elem);
-
-    region_status_ = tmm_->is_significant(region_id);
+    current_calltree_elem_ = current_calltree_elem_->enter_node(region_id);
 
     load_config();
 }
@@ -283,34 +197,74 @@ void rts_handler::exit_region(uint32_t region_id, SCOREP_Location *locationData)
     }
 
     auto elem = tmm::simple_callpath_element(region_id, tmm::identifier_set());
-    if ((callpath_.size() == 1) && (tmm_->is_root(elem) == true))
+    if ((current_calltree_elem_->parent_->info.type == call_tree::node_type::root) &&
+        (tmm_->is_root(elem) == true))
     {
         is_inside_root = false;
     }
 
-    auto callpath_elem = callpath_.back();
-    if (callpath_elem.region_id != elem.region_id)
+    if (current_calltree_elem_->info.region_id != elem.region_id)
     {
         logging::error("RTS") << "callpath not intact. RegionId removed from "
-                              << "the callpath: " << callpath_elem.region_id << " RegionId "
+                              << "the callpath: " << current_calltree_elem_->info.region_id
+                              << " RegionId "
                               << "passed by Score-P: " << region_id;
-        logging::error("RTS") << "full callpath_elem on stack:\n" << callpath_elem;
+        logging::error("RTS") << "full callpath_elem on stack:\n"
+                              << current_calltree_elem_->build_callpath();
         logging::error("RTS") << "full elem from region:\n" << elem;
         logging::error("RTS") << "won't change the callpath.";
     }
-    if (callpath_elem.calibrate)
+
+    if (current_calltree_elem_->info.state == call_tree::node_state::calibrate)
     {
-        auto config = cal_->request_configuration(callpath_elem.region_id);
-        tmm_->store_configuration(callpath_, config, std::chrono::milliseconds::max());
-    }
-    else
-    {
-        if (callpath_.back().config_set)
+        /* If the parent node decided to calibrate, we didn't. Similar if the parente has not
+         * decided yet and is still in measrument.
+         */
+        if ((current_calltree_elem_->parent_->info.state != call_tree::node_state::calibrate) and
+            (current_calltree_elem_->parent_->info.state !=
+                call_tree::node_state::measure_duration))
         {
-            pc_.unset_parameters();
+            if (!cal_->keep_calibrating())
+            {
+                current_calltree_elem_->set_configuration(
+                    cal_->request_configuration(current_calltree_elem_->info.region_id));
+
+                tmm_->store_configuration(current_calltree_elem_->build_callpath(),
+                    current_calltree_elem_->get_configuration(),
+                    current_calltree_elem_->info.duration);
+                current_calltree_elem_->info.state = call_tree::node_state::known;
+            }
         }
     }
-    callpath_.pop_back();
+    else if (current_calltree_elem_->info.state == call_tree::node_state::measure_duration)
+    {
+        current_calltree_elem_->stop_measurment();
+        if (current_calltree_elem_->callibrate_region(significant_duration))
+        {
+            current_calltree_elem_->info.state = call_tree::node_state::calibrate;
+        }
+        else
+        {
+            current_calltree_elem_->info.state = call_tree::node_state::known;
+        }
+    }
+
+    for (int i = 0; i < current_calltree_elem_->info.configs_set; i++)
+    {
+        /* if we have set different configs together with different additional identifiers, we need
+         * to reset them all.
+         * Example:
+         * * region_id = 0
+         * * region_id = 1
+         * * add_id foo=1 --> congig(cpufreq = 2.5GHz)
+         * * add_id baz=1 --> congig(cpufreq = 2.0GHz)
+         * When we now call return_to_parent() we need to unset both add_id foo and add_id baz
+         * But we get only on exit. So we need to collect them, and reset them at once.
+         */
+        pc_.unset_parameters();
+    }
+    current_calltree_elem_->info.configs_set = 0;
+    current_calltree_elem_ = current_calltree_elem_->return_to_parent();
 }
 
 void rts_handler::create_location(SCOREP_LocationType location_type, std::uint32_t location_id)
@@ -344,8 +298,10 @@ void rts_handler::user_parameter(
     logging::trace("RTS") << " Got additional user param uint \"" << user_parameter_name
                           << "(hash: " << user_parameter_hash_(user_parameter_name)
                           << "\": " << value;
-    callpath_.back().id_set.add_identifier(user_parameter_name, value);
-
+    call_tree::add_id_node *tmp = dynamic_cast<call_tree::add_id_node *>(
+        current_calltree_elem_->enter_node(user_parameter_name));
+    current_calltree_elem_ = tmp->enter_node_uint(value);
+    current_calltree_elem_->info.stacked_add_ids++;
     load_config();
 }
 
@@ -368,8 +324,10 @@ void rts_handler::user_parameter(
     logging::trace("RTS") << " Got additional user param int \"" << user_parameter_name
                           << "(hash: " << user_parameter_hash_(user_parameter_name)
                           << "\": " << value;
-    callpath_.back().id_set.add_identifier(user_parameter_name, value);
-
+    call_tree::add_id_node *tmp = dynamic_cast<call_tree::add_id_node *>(
+        current_calltree_elem_->enter_node(user_parameter_name));
+    current_calltree_elem_ = tmp->enter_node_int(value);
+    current_calltree_elem_->info.stacked_add_ids++;
     load_config();
 }
 
@@ -394,8 +352,77 @@ void rts_handler::user_parameter(
     logging::trace("RTS") << " Got additional user param string \"" << user_parameter_name
                           << "(hash: " << user_parameter_hash_(user_parameter_name)
                           << "\": " << value;
-    callpath_.back().id_set.add_identifier(user_parameter_name, value);
-
+    call_tree::add_id_node *tmp = dynamic_cast<call_tree::add_id_node *>(
+        current_calltree_elem_->enter_node(user_parameter_name));
+    current_calltree_elem_ = tmp->enter_node_string(value);
+    current_calltree_elem_->info.stacked_add_ids++;
     load_config();
+}
+
+/** parses the input identifier .json file.
+ *
+ */
+void rts_handler::parse_input_identifier_file(const std::string &input_id_file)
+{
+    std::ifstream input_id_file_(input_id_file);
+    if (!input_id_file_.is_open())
+    {
+        if (input_id_file_.fail())
+        {
+            logging::error("RTS") << "Could not open Input Identifer File: " << strerror(errno);
+        }
+        else
+        {
+            logging::error("RTS") << "Could not open Input Identifer File";
+        }
+    }
+    json input_id;
+    input_id_file_ >> input_id;
+    for (json::iterator it = input_id.begin(); it != input_id.end(); ++it)
+    {
+        if (it.key() == "collect_num_threads")
+        {
+            if (it.value().is_boolean() && it.value().get<bool>())
+            {
+                try
+                {
+                    auto omp_get_max_threads =
+                        nitro::dl::dl(nitro::dl::self).load<int(void)>("omp_get_max_threads");
+                    auto num_threads = omp_get_max_threads();
+                    input_identifiers_["threads"] = std::to_string(num_threads);
+                    logging::debug("RTS") << "Added Input Identifier \"threads\" with value \""
+                                          << num_threads << "\"";
+                }
+                catch (nitro::dl::exception &e)
+                {
+                    logging::debug("RTS")
+                        << "could not find \"omp_get_max_threads\". Reason:" << e.what();
+                }
+            }
+            continue;
+        }
+        if (it.key() == "collect_num_processes")
+        {
+            if (it.value().is_boolean() && it.value().get<bool>())
+            {
+                int size = scorep::call::ipc_get_size();
+                input_identifiers_["processes"] = std::to_string(size);
+                logging::debug("RTS")
+                    << "Added Input Identifier \"processes\" with value \"" << size << "\"";
+            }
+            continue;
+        }
+        if (it.value().is_string())
+        {
+            input_identifiers_[it.key()] = it.value().get<std::string>();
+            logging::debug("RTS") << "Added Input Identifier \"" << it.key() << "\" with value \""
+                                  << it.value().get<std::string>() << "\"";
+        }
+        else
+        {
+            logging::warn("RTS") << "Canno't parse key \"" << it.key()
+                                 << "\". Value is not a string";
+        }
+    }
 }
 }

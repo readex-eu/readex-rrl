@@ -368,5 +368,10 @@ std::vector<tmm::parameter_tuple> cal_collect_fix::request_configuration(uint32_
 {
     return std::vector<tmm::parameter_tuple>();
 }
+
+bool cal_collect_fix::keep_calibrating()
+{
+    return true;
+}
 }
 }

@@ -160,8 +160,11 @@ public:
      * If there are no configuration stored for the given @ref simple_callpath_element
      * an empty vector is returned.
      *
-     * @param callpath and callpath_element() that hollds region_id's
+     * @param callpath out of simple_callpath_element() that hollds region_id's
      *        and additional identifiers
+     * @param inputinput_identifers input identifers, gernerated during application startup. They
+     *        describe the input values of the application.
+     *
      *
      * @return configuration for the rts. It is a vector of parameter tuples
      *      @ref parameter_tuple
@@ -217,6 +220,14 @@ public:
      * std::vector<callpath_element>
      */
     virtual std::unordered_map<int, phase_data_t> get_phase_data() noexcept = 0;
+
+    /** indicates if the Tuning Model has changes since the last call to has_changed(). This will
+     * change the interal state of the TM. Use set_changed() and hand the return value of
+     * has_changed to reset the state to the previous one.
+     */
+    virtual bool has_changed() noexcept = 0;
+
+    virtual void set_changed(bool) noexcept = 0;
 };
 
 /** This function returns an instance of one of the tuning_model_manager
