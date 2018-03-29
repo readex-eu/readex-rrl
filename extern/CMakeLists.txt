@@ -3,9 +3,8 @@ cmake_minimum_required (VERSION 3.8)
 function(git_clone_checkout target_dir)
 
     # check if we need to download the anything or just update 
-    file(GLOB SUBMODULE_FILES "${target_dir}/" "*")
+    file(GLOB SUBMODULE_FILES "${target_dir}/*")
     list(LENGTH SUBMODULE_FILES COUNT_FILES)
-   
     if (${COUNT_FILES} EQUAL 0)
         message(STATUS "Initializing git submodule for ${target_dir}")
         execute_process(

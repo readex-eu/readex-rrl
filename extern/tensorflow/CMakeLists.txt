@@ -37,9 +37,9 @@ else()
     endif()
     
     find_path(TENSORFLOW_INC tensorflow/c/c_api.h
-        HINTS ENV 
-            CPATH
-            C_INCLUDE_PATH)
+        HINTS  
+            ENV CPATH
+            ENV C_INCLUDE_PATH)
     
     add_library(tensorflow INTERFACE IMPORTED GLOBAL)
     target_link_libraries(tensorflow INTERFACE

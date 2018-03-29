@@ -60,8 +60,9 @@ void rat_tmm::store_configuration(const std::vector<simple_callpath_element> &ca
     std::chrono::milliseconds exectime)
 {
     std::vector<callpath_element> cp;
-    for (const auto & cpe : callpath) {
-        const auto & rid = registered_regions_[cpe.region_id];
+    for (const auto &cpe : callpath)
+    {
+        const auto &rid = registered_regions_[cpe.region_id];
         cp.push_back(callpath_element(rid, cpe.id_set));
     }
 
@@ -102,28 +103,29 @@ const std::vector<parameter_tuple> rat_tmm::get_current_rts_configuration(
     if (!iptmap)
         return {};
 
-
     /* we only have one configuration, use it */
-    if (iptmap->size() == 1) {
-        const auto & config = (*iptmap->begin()).second;
+    if (iptmap->size() == 1)
+    {
+        const auto &config = (*iptmap->begin()).second;
 
         std::vector<parameter_tuple> ptpl;
-        for (const auto & tp : config)
+        for (const auto &tp : config)
             ptpl.push_back(parameter_tuple(tp.first, tp.second));
 
         return ptpl;
     }
 
     identifier_set iset;
-    for (const auto & id : input_identifiers)
-       iset.add_identifier(id.first, id.second);
+    for (const auto &id : input_identifiers)
+        iset.add_identifier(id.first, id.second);
 
     /* if we have a configuration for given input identifiers, use it */
-    if (iptmap->find(iset) != iptmap->end()) {
-        const auto & config = (*iptmap).at(iset);
+    if (iptmap->find(iset) != iptmap->end())
+    {
+        const auto &config = (*iptmap).at(iset);
 
         std::vector<parameter_tuple> ptpl;
-        for (const auto & tp : config)
+        for (const auto &tp : config)
             ptpl.push_back(parameter_tuple(tp.first, tp.second));
 
         return ptpl;
@@ -159,14 +161,13 @@ std::chrono::milliseconds rat_tmm::get_exectime(
         const auto &rid = registered_regions_[cpe.region_id];
         cp.push_back(callpath_element(rid, cpe.id_set));
     }
-    auto exec_seconds = std::chrono::duration<double>(tm_.exectime(cp));
-    return std::chrono::duration_cast<std::chrono::milliseconds>(exec_seconds);
+
+    return tm_.exectime(cp);
 }
 
 std::unordered_map<int, phase_data_t> rat_tmm::get_phase_data() noexcept
 {
     return tm_.clusters();
 }
-
 }
 }

@@ -41,14 +41,20 @@ static int test(const std::string &file_path)
     assert(tm.has_rts(cp2));
     assert(tm.has_rts(cp3));
 
-    assert(tm.exectime({{main, {}}, {r0, {ids0}}}) == 10.0);
-    assert(tm.exectime({{main, {}}, {r1, {ids1}}}) == 9.0);
-    assert(tm.exectime({{main, {}}, {reg, {ids1}}, {r1, {ids1}}}) == 8.0);
+    assert(
+        tm.exectime({{main, {}}, {r0, {ids0}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(10.0)));
+    assert(
+        tm.exectime({{main, {}}, {r1, {ids1}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(9.0)));
+    assert(
+        tm.exectime({{main, {}}, {reg, {ids1}}, {r1, {ids1}}}) ==
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(8.0)));
 
     assert(tm.nidentifiers(r0) == 1);
     assert(tm.nidentifiers(r1) == 1);
 
-    auto & pd = tm.clusters();
+    auto &pd = tm.clusters();
     assert(pd.size() == 1);
 
     auto cid = (*pd.begin()).first;
