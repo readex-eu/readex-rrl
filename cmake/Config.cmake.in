@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/@targets_export_name@.cmake")
+check_required_components("@PROJECT_NAME@")
+set (RRL_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
+set( RRL_LIBRARIES "@CMAKE_INSTALL_PREFIX@/lib/libscorep_substrate_rrl.so")
+message (STATUS "Runing rrl-config.cmake")

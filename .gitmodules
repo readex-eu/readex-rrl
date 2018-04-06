@@ -1,0 +1,18 @@
+[submodule "TUD_RRL/extern/json"]
+	path = extern/json
+	url = https://github.com/nlohmann/json.git
+[submodule "TUD_RRL/extern/cereal"]
+	path = extern/cereal
+	url = https://github.com/USCiLab/cereal.git
+[submodule "TUD_RRL/extern/nitro"]
+	path = extern/nitro
+	url = https://github.com/tud-zih-energy/nitro.git
+[submodule "TUD_RRL/extern/uncore_read"]
+	path = extern/uncore_read
+	url = https://gitlab.hrz.tu-chemnitz.de/gocht--tu-dresden.de/uncore_read.git
+[submodule "TUD_RRL/extern/papi_read"]
+	path = extern/papi_read
+	url = https://gitlab.hrz.tu-chemnitz.de/gocht--tu-dresden.de/papi_read.git
+[submodule "TUD_RRL/extern/scorep_plugin_cxx_wrapper"]
+	path = extern/scorep_plugin_cxx_wrapper
+	url = https://github.com/score-p/scorep_plugin_cxx_wrapper.git

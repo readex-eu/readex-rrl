@@ -1,0 +1,46 @@
+variables:
+    GIT_SUBMODULE_STRATEGY: 'recursive'
+
+stages:
+  - build
+  - deploy
+  - doc
+
+job1:
+    stage: build
+    script:
+        - export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+        - export LD_LIBRARY_PATH="/usr/local/lib/"
+        - git clean -df
+        - mkdir -p build
+        - cd build
+        - cmake ../ -DSCOREP_CONFIG_PATH=/opt/integration_modules/scorep/TRY_READEX_online_access_call_tree_extensions/bin/ -DCMAKE_INSTALL_PREFIX=/opt/integration_modules/rrl
+        - make
+    cache:
+        key: bullxmpi1.2.8.4_gcc6.3.0
+        untracked: true
+        
+job2:
+    stage: deploy
+    script:
+        - cd build
+        - make install
+    cache:
+        key: bullxmpi1.2.8.4_gcc6.3.0
+        untracked: true
+
+job3:
+    stage: doc
+    script:
+        - cd build
+        - make doc
+    cache:
+        key: bullxmpi1.2.8.4_gcc6.3.0
+        untracked: true
+    artifacts:
+        paths:
+            - build/doc/
+        expire_in: 4 week
+
+    
+

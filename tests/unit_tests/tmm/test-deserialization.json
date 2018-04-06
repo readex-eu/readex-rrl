@@ -1,0 +1,219 @@
+{
+    "clusters": [
+        {
+            "clusterid": 23,
+            "cluster_phases": [
+                1,
+                2,
+                3
+            ],
+            "phase_ranges": [
+                {
+                    "feature": "range1",
+                    "start": 1.0,
+                    "end": 42.0
+                }
+            ]
+        }
+    ],
+    "iids": [
+        {
+            "id": 0,
+            "identifiers": [
+                {
+                    "type": "string",
+                    "name": "size",
+                    "value": "small"
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "identifiers": [
+                {
+                    "type": "string",
+                    "name": "size",
+                    "value": "big"
+                }
+            ]
+        }
+    ],
+    "regions": [
+        {
+            "id": 0,
+            "file": "foo.c",
+            "line": 45,
+            "name": "r0"
+        },
+        {
+            "id": 1,
+            "file": "bar.c",
+            "line": 12,
+            "name": "r1"
+        }
+    ],
+    "rtss": [
+        {
+            "region": 0,
+            "scenario": 0,
+            "exectime": 10.0,
+            "iid": 0,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 1,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "foo.c",
+                        "line": 45,
+                        "name": "r0"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "p3",
+                            "value": "foobar"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": 1,
+            "scenario": 1,
+            "exectime": 9.0,
+            "iid": 0,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 1,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "bar.c",
+                        "line": 12,
+                        "name": "r1"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "p1",
+                            "value": "bla"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": 1,
+            "scenario": 1,
+            "exectime": 9.0,
+            "iid": 1,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 1,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "bar.c",
+                        "line": 12,
+                        "name": "r1"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "p1",
+                            "value": "bla"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": 1,
+            "scenario": 1,
+            "exectime": 8.0,
+            "iid": 1,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 1,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "reg.c",
+                        "line": 90,
+                        "name": "reg"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "p1",
+                            "value": "bla"
+                        }
+                    ]
+                },
+                {
+                    "region": {
+                        "file": "bar.c",
+                        "line": 12,
+                        "name": "r1"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "p1",
+                            "value": "bla"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "scenarios": [
+        {
+            "id": 0,
+            "configuration": [
+                {
+                    "id": "nthreads",
+                    "value": 6
+                },
+                {
+                    "id": "frequency",
+                    "value": 1200
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "configuration": [
+                {
+                    "id": "nthreads",
+                    "value": 8
+                },
+                {
+                    "id": "fequency",
+                    "value": 1200
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,131 @@
+{
+    "clusters": [],
+    "iids": [
+        {
+            "id": 0,
+            "identifiers": [
+                {
+                    "type": "string",
+                    "name": "size",
+                    "value": "small"
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "identifiers": [
+                {
+                    "type": "string",
+                    "name": "size",
+                    "value": "big"
+                }
+            ]
+        }
+    ],
+    "regions" : [
+        {
+            "id": 0,
+            "file": "file.c",
+            "line": 45,
+            "name": "r0"
+        }
+    ],
+    "rtss": [
+        {
+            "region": 0,
+            "scenario": 0,
+            "exectime": 10.0,
+            "iid": 0,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 12,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "file.c",
+                        "line": 45,
+                        "name": "r0"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "id0",
+                            "value": "bla"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "region": 0,
+            "scenario": 1,
+            "exectime": 9.0,
+            "iid": 1,
+            "callpath": [
+                {
+                    "region": {
+                        "file": "main.c",
+                        "line": 12,
+                        "name": "main"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "reg.c",
+                        "line": 45,
+                        "name": "reg"
+                    },
+                    "identifiers": []
+                },
+                {
+                    "region": {
+                        "file": "file.c",
+                        "line": 45,
+                        "name": "r0"
+                    },
+                    "identifiers": [
+                        {
+                            "type": "string",
+                            "name": "id0",
+                            "value": "foobar"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "scenarios": [
+        {
+            "id": 0,
+            "configuration": [
+                {
+                    "id": "nthreads",
+                    "value": 6
+                },
+                {
+                    "id": "frequency",
+                    "value": 1200
+                }
+            ]
+        },
+        {
+            "id": 1,
+            "configuration": [
+                {
+                    "id": "nthreads",
+                    "value": 8
+                },
+                {
+                    "id": "frequency",
+                    "value": 1200
+                }
+            ]
+        }
+    ]
+}
