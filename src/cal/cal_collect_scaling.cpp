@@ -171,6 +171,8 @@ std::vector<tmm::parameter_tuple> cal_collect_scaling::calibrate_region(uint32_t
     std::vector<tmm::parameter_tuple> curent_setting;
     current_core_freq = available_core_freqs[setting_dis[core](gen)];
     current_uncore_freq = available_uncore_freqs[setting_dis[uncore](gen)];
+    logging::trace("CAL_COLLECT_SCALING") << "current_core_freq: \n" << current_core_freq ;
+    logging::trace("CAL_COLLECT_SCALING") << "current_uncore_freq: \n" << current_uncore_freq ;
 
     curent_setting.push_back(tmm::parameter_tuple(core, current_core_freq));
     curent_setting.push_back(tmm::parameter_tuple(uncore, current_uncore_freq));

@@ -82,6 +82,13 @@ public:
      * @return true if further calibration is needed, false otherwise.
      */
     virtual bool keep_calibrating() = 0;
+
+    /* returns true if data are supposed to be saved, and therefore an experiment directory is
+     * needed.
+     *
+     * @return true if experiment directory is needed.
+     */
+    virtual bool require_experiment_directory() = 0;
 };
 
 std::shared_ptr<calibration> get_calibration(

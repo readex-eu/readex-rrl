@@ -46,6 +46,11 @@ public:
         std::uint32_t region_id) override;
     virtual bool keep_calibrating() override;
 
+    bool require_experiment_directory() override
+    {
+        return true;
+    }
+
 private:
     bool initialised;
 

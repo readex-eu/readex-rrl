@@ -25,6 +25,8 @@
 #include <fstream>
 #include <map>
 #include <random>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace rrl
@@ -51,6 +53,11 @@ public:
     virtual std::vector<tmm::parameter_tuple> request_configuration(uint32_t) override;
     virtual bool keep_calibrating() override;
 
+    bool require_experiment_directory() override
+    {
+        return true;
+    }
+
 private:
     bool collect_counters = false;
     bool initialised = false;
@@ -61,6 +68,7 @@ private:
 
     std::ofstream counter_stream_file;
     std::string counter_stream_file_name = "";
+    std::string invalid_combinations_filename = "";
     cal_counter::stream counter_stream;
     std::vector<cal_nn::datatype::stream_elem> data;
 
@@ -85,10 +93,14 @@ private:
     uint64_t last_energy = 0;
     std::map<std::uint32_t, std::string> regions;
 
+    std::unordered_map<std::string, std::unordered_set<std::string>> invalid_counter_combination;
+
     void set_new_counter();
     void calc_counter_values(std::uint32_t new_region_id,
         add_cal_info::region_event new_region_event,
         std::uint64_t *metricValues);
+    std::vector<std::string> gen_hsw_ep_counter();
+    uncore::box_set gen_uncore_counter();
 };
 }
 }

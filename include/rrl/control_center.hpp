@@ -32,6 +32,7 @@
 #include <cal/calibration.hpp>
 #include <tmm/tuning_model_manager.hpp>
 
+#include <rrl/filter.hpp>
 #include <rrl/metric_manager.hpp>
 #include <rrl/oa_event_receiver.hpp>
 #include <rrl/rts_handler.hpp>
@@ -116,6 +117,8 @@ public:
         SCOREP_SamplingSetHandle counterHandle,
         double value);
 
+    bool require_experiment_directory();
+
     static std::unique_ptr<control_center> _instance_;
 
     /** Retruns an initalised instance of the control_center.
@@ -160,6 +163,7 @@ private:
 
     rts_handler rts_;                     /**< holds the @ref rts_handler*/
     oa_event_receiver oa_event_receiver_; /**< holds the @ref oa_event_receiver*/
+    filter filter_;                       /**< holds the @ref filter*/
 
     std::string hostname; /**< the hostname of the device we are curently on */
 

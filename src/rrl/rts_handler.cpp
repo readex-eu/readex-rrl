@@ -94,6 +94,8 @@ void rts_handler::load_config()
     }
     if (current_calltree_elem_->info.state == call_tree::node_state::unknown)
     {
+        logging::trace("RTS") << "ENTER State: call_tree::node_state::unknown.";
+        
         if (tmm_->is_significant(current_calltree_elem_->info.region_id) == tmm::significant)
         {
             auto call_path = current_calltree_elem_->build_callpath();
@@ -107,16 +109,19 @@ void rts_handler::load_config()
                 current_calltree_elem_->info.duration = tmm_->get_exectime(call_path);
             }
             current_calltree_elem_->info.state = call_tree::node_state::known;
+            logging::trace("RTS") << "ENTER Change State to : call_tree::node_state::known.";
         }
         else
         {
             current_calltree_elem_->info.state = call_tree::node_state::measure_duration;
+            logging::trace("RTS") << "ENTER Change State to : call_tree::node_state::measure_duration.";
             current_calltree_elem_->start_measurment();
         }
     }
 
     if (current_calltree_elem_->info.state == call_tree::node_state::known)
     {
+        logging::trace("RTS") << "ENTER State: call_tree::node_state::known.";
         if ((current_calltree_elem_->get_configuration().size() > 0) &&
             (current_calltree_elem_->info.duration > significant_duration))
         {
@@ -126,15 +131,26 @@ void rts_handler::load_config()
     }
     else if (current_calltree_elem_->info.state == call_tree::node_state::calibrate)
     {
+        logging::trace("RTS") << "ENTER State: call_tree::node_state::calibrate.";
         /* If the parent node decided to calibrate, we better don't. Similar if the parente has not
          * decided yet and is still in measrument.
+         * 
+         * This is a bead idea if the parent measures for ever, like when main is to be measured.
          *
          */
+/*        
+        logging::trace("RTS") << "current_calltree_elem_->parent_->info.state != call_tree::node_state::calibrate : " << (current_calltree_elem_->parent_->info.state != call_tree::node_state::calibrate?"true":"false");
+        logging::trace("RTS") << "current_calltree_elem_->parent_->info.state != call_tree::node_state::measure_duration : " << (current_calltree_elem_->parent_->info.state != call_tree::node_state::measure_duration?"true":"false");
         if ((current_calltree_elem_->parent_->info.state != call_tree::node_state::calibrate) and
             (current_calltree_elem_->parent_->info.state !=
                 call_tree::node_state::measure_duration))
+           //Just in case someone wants to know if I know what I am doing ... I don't :D.
+           //But at least for training this needs to be commented out. Otherwise the freq will never be changed.
+           //Simply do whatever cal decides.
+*/                
         {
             auto conf = cal_->calibrate_region(current_calltree_elem_->info.region_id);
+            current_calltree_elem_->set_configuration(conf);
             pc_.set_parameters(current_calltree_elem_->get_configuration());
             current_calltree_elem_->info.configs_set++;
         }
@@ -217,6 +233,7 @@ void rts_handler::exit_region(uint32_t region_id, SCOREP_Location *locationData)
 
     if (current_calltree_elem_->info.state == call_tree::node_state::calibrate)
     {
+        logging::trace("RTS") << "EXIT State: call_tree::node_state::calibrate.";
         /* If the parent node decided to calibrate, we didn't. Similar if the parente has not
          * decided yet and is still in measrument.
          */
@@ -233,18 +250,22 @@ void rts_handler::exit_region(uint32_t region_id, SCOREP_Location *locationData)
                     current_calltree_elem_->get_configuration(),
                     current_calltree_elem_->info.duration);
                 current_calltree_elem_->info.state = call_tree::node_state::known;
+                logging::trace("RTS") << "EXIT Change State to : call_tree::node_state::known.";
             }
         }
     }
     else if (current_calltree_elem_->info.state == call_tree::node_state::measure_duration)
     {
+        logging::trace("RTS") << "EXIT State: call_tree::node_state::measure_duration.";
         current_calltree_elem_->stop_measurment();
         if (current_calltree_elem_->callibrate_region(significant_duration))
         {
+            logging::trace("RTS") << "EXIT Change State: call_tree::node_state::calibrate.";
             current_calltree_elem_->info.state = call_tree::node_state::calibrate;
         }
         else
         {
+            logging::trace("RTS") << "EXIT Change State: call_tree::node_state::known.";
             current_calltree_elem_->info.state = call_tree::node_state::known;
         }
     }

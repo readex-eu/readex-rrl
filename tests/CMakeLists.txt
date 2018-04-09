@@ -15,11 +15,11 @@ cmake_policy(SET CMP0003 NEW)
 
 INCLUDE_DIRECTORIES(./ ${CMAKE_SOURCE_DIR}/include)
 
-ADD_EXECUTABLE(test-runner ${TEST_SOURCES})
+ADD_EXECUTABLE(test-runner EXCLUDE_FROM_ALL ${TEST_SOURCES})
 TARGET_LINK_LIBRARIES(test-runner scorep_substrate_rrl)
 
 foreach(test ${TESTS})
     ADD_CUSTOM_COMMAND(TARGET test-runner POST_BUILD
-        COMMAND test-runner ${test} 2> /dev/null
+        COMMAND test-runner ${test}
         COMMENT "Run tests")
 endforeach()

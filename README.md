@@ -104,9 +104,22 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
  * `collect_scaling` for trainign to find optimal configuration for regions.
  * `cal_dummy` dummy calibration mechanism. Just returns 2.501 GHz core and 3 GHz uncore freq.
 
+* `SCOREP_RRL_FILTERING_FILE` file for filtering regions with a specific name  
+    If no filtering file is specified, than all regions will be included.
+    The syntax of the filter file is based on scorep filter files, but there are some restrictions.
+    * the keyword MANGLED is currently not supported
+    * only one region name per line is allowed 
+    * region names can be intended
+    * region names with shell wildcard patterns are supported
+    * region names on the same line as `INCLUDE` or `EXCLUDE` are not supported
+    * You can use comments, they start with `#` and end with a new line. If a region name contains `#` you have to escape it with a `\`. 
+
 #### Calibration specific varibales
 
 ##### `collect_all`
+* `SCOREP_RRL_IVALID_COMBINATION`
+    path to a json file. All invalid combinations of papi counters, which are detected during
+    runtime will be saved there. They will be avoided for counter selection later on.
 
 ##### `collect_fix`
 

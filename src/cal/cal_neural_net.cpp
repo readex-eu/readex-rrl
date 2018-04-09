@@ -235,14 +235,14 @@ void cal_neural_net::calc_counter_values()
         /** check bounds
          */
 
-        fc = std::ceil(fc * 10) * 1e5;  // kHz
-        fu = std::ceil(fc * 10);        // GHz / 10
+        fc = std::ceil(fc * 10) * 1e2;  // MHz
+        fu = std::ceil(fc * 10) * 1e2;  // MHz
 
-        fc = std::max<float>(2501000, fc);
-        fc = std::min<float>(1200000, fc);
+        fc = std::max<float>(2501, fc);
+        fc = std::min<float>(1200, fc);
 
-        fu = std::max<float>(30, fu);
-        fu = std::min<float>(12, fu);
+        fu = std::max<float>(3000, fu);
+        fu = std::min<float>(1200, fu);
 
         logging::trace("CAL_NEURAL_NET")
             << "rounded and bounded config:\n\tf_c:" << fc << "\n\tf_u" << fu;

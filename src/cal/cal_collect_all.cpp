@@ -75,6 +75,29 @@ cal_collect_all::cal_collect_all(std::shared_ptr<metric_manager> mm)
     }
     counter_stream_file_name = save_filename;
 
+    invalid_combinations_filename = rrl::environment::get("IVALID_COMBINATION", "");
+    if (invalid_combinations_filename == "")
+    {
+        logging::info("CAL_COLLECT_ALL") << "no invalid_combinations_filename file given!";
+    }
+    else
+    {
+        std::ifstream invla_file(invalid_combinations_filename, std::ios_base::in);
+        if (!invla_file.is_open())
+        {
+            logging::info("CAL_COLLECT_ALL") << "can't open counter invalid_combinations_file!";
+            logging::info("CAL_COLLECT_ALL") << "reason: " << strerror(errno);
+            logging::info("CAL_COLLECT_ALL") << "file: " << invalid_combinations_filename;
+        }
+        else
+        {
+            nlohmann::json tmp;
+            invla_file >> tmp;
+            invalid_counter_combination =
+                tmp.get<std::unordered_map<std::string, std::unordered_set<std::string>>>();
+        }
+    }
+
     if (collect_counters)
     {
         int id_counter = 0;
@@ -219,6 +242,22 @@ cal_collect_all::~cal_collect_all()
                                               << "\" while laoding \"" << set.second << "\"";
         }
     }
+    if (invalid_combinations_filename != "")
+    {
+        std::ofstream invla_file(invalid_combinations_filename, std::ios_base::out);
+        if (!invla_file.is_open())
+        {
+            logging::info("CAL_COLLECT_ALL") << "can't open counter invalid_combinations_file!";
+            logging::info("CAL_COLLECT_ALL") << "reason: " << strerror(errno);
+            logging::info("CAL_COLLECT_ALL") << "file: " << invalid_combinations_filename;
+        }
+        else
+        {
+            nlohmann::json tmp;
+            tmp = invalid_counter_combination;
+            invla_file << tmp;
+        }
+    }
 }
 
 void cal_collect_all::init_mpp()
@@ -288,6 +327,122 @@ void cal_collect_all::exit_region(
     }
 }
 
+/** This function randomly selects papi counter from the hsw_ep set.
+ * The returned vector can be used to set papi counter using papi_read.
+ *
+ * @return std::vector<std::string> with the selected counter
+ *
+ *
+ */
+std::vector<std::string> cal_collect_all::gen_hsw_ep_counter()
+{
+    std::vector<std::string> selected_papi_counter;
+    int offcore_count = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        std::string name = "";
+        bool valid_new_counter = true;
+        do
+        {
+            valid_new_counter = true;
+            int index = counter_dis["hsw_ep"](gen);
+            name = counter_boxes["hsw_ep"][index];
+            /*
+             * check if this counter is already selected. If yes, re
+             * execute.
+             */
+            for (const auto &counter : selected_papi_counter)
+            {
+                if (counter == name)
+                {
+                    /* counter is already in set
+                             *
+                             */
+                    valid_new_counter = false;
+                    break;
+                }
+                auto it = invalid_counter_combination.find(counter);
+                if ((it != invalid_counter_combination.end()) &&
+                    (it->second.find(name) != it->second.end()))
+                {
+                    /* counter this combination caused an error to papi set
+                             *
+                             */
+                    valid_new_counter = false;
+                    break;
+                }
+                if (name.find("OFFCORE") != std::string::npos)
+                {
+                    /*
+                     * check if there already two "OFFCORE" values in the papi coutners.
+                     * We can't measure more than two at hsw_ep.
+                     * If yes, we need to select a new counter.
+                     */
+                    if (offcore_count >= 2)
+                    {
+                        valid_new_counter = false;
+                        break;
+                    }
+                    else
+                    {
+                        offcore_count++;
+                    }
+                }
+            }
+        } while (!valid_new_counter);
+        logging::trace("CAL") << "add papi event \"" << name << "\"";
+        selected_papi_counter.push_back(name);
+    }
+    return selected_papi_counter;
+}
+
+/** This function randomly selects uncorecounter from the various boxes.
+ * The returned \ref uncore::box_set can be used to set uncore counter using uncore read.
+ *
+ * @return uncore::box_set with the selected counter
+ *
+ *
+ */
+uncore::box_set cal_collect_all::gen_uncore_counter()
+{
+    uncore::box_set selected_uncore_counter;
+    for (auto &box : counter.get<std::unordered_map<std::string, nlohmann::json>>())
+    {
+        if (box.first == "hsw_ep")
+        {
+            continue;
+        }
+        // handle the case when there are less counter we want to measure, than we could
+        if (counter_boxes[box.first].size() <= static_cast<size_t>(box.second["counters"]))
+        {
+            for (auto &name : counter_boxes[box.first])
+            {
+                logging::trace("CAL_COLLECT_ALL")
+                    << "add uncore event \"" << name << "\" for box \"" << box.first << "\"";
+                selected_uncore_counter[box.first].push_back(name);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < box.second["counters"]; i++)
+            {
+                std::string name;
+                do
+                {
+                    int index = counter_dis[box.first](gen);
+                    name = counter_boxes[box.first][index];
+                } while (std::find(selected_uncore_counter[box.first].begin(),
+                             selected_uncore_counter[box.first].end(),
+                             name) != selected_uncore_counter[box.first].end());
+                logging::trace("CAL_COLLECT_ALL")
+                    << "add uncore event \"" << name << "\" for box \"" << box.first << "\"";
+                selected_uncore_counter[box.first].push_back(name);
+            }
+        }
+    }
+    return selected_uncore_counter;
+}
+
 /** Set's new conuters.
  *
  * This function randomly selects counter for each box out of counter_boxes and sets them (for papi
@@ -305,99 +460,61 @@ void cal_collect_all::set_new_counter()
         std::vector<std::string> selected_papi_counter;
         uncore::box_set selected_uncore_counter;
 
-        if (counter.find("hsw_ep") != counter.end())
+        selected_uncore_counter = gen_uncore_counter();
+
+        bool papi_counter_valid = false;
+        int iterations = 0;
+        while (!papi_counter_valid && (iterations < 100))
         {
-            int offcore_count = 0;
-            for (int i = 0; i < 4; i++)
+            if (counter.find("hsw_ep") != counter.end())
             {
-                std::string name = "";
-
-                do
-                {
-                    int index = counter_dis["hsw_ep"](gen);
-                    name = counter_boxes["hsw_ep"][index];
-
-                    /*
-                     * check if this counter is already selected. If yes, re
-                     * execute.
-                     */
-                    if (std::find(selected_papi_counter.begin(),
-                            selected_papi_counter.end(),
-                            name) == selected_papi_counter.end())
-                    {
-                        /*
-                         * check if there already two "OFFCORE" values in the papi coutners.
-                         * We can't measure more than two at hsw_ep.
-                         * If yes, we need to select a new counter.
-                         */
-                        if (name.find("OFFCORE") != std::string::npos)
-                        {
-                            if (offcore_count >= 2)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                offcore_count++;
-                            }
-                        }
-
-                        break;
-                    }
-
-                } while (true);
-
-                logging::trace("CAL") << "add papi event \"" << name << "\"";
-                selected_papi_counter.push_back(name);
-            }
-        }
-
-        for (auto &box : counter.get<std::unordered_map<std::string, nlohmann::json>>())
-        {
-            if (box.first == "hsw_ep")
-            {
-                continue;
-            }
-
-            // handle the case when there are less counter we want to measure, than we could
-            if (counter_boxes[box.first].size() <= static_cast<size_t>(box.second["counters"]))
-            {
-                for (auto &name : counter_boxes[box.first])
-                {
-                    logging::trace("CAL_COLLECT_ALL")
-                        << "add uncore event \"" << name << "\" for box \"" << box.first << "\"";
-
-                    selected_uncore_counter[box.first].push_back(name);
-                }
+                selected_papi_counter = gen_hsw_ep_counter();
             }
             else
             {
-                for (int i = 0; i < box.second["counters"]; i++)
+                papi_counter_valid = true;
+                break;
+            }
+
+            try
+            {
+                papi.set_counter(selected_papi_counter);
+                papi_counter_valid = true;
+            }
+            catch (papi::papi_error &e)
+            {
+                logging::error("CAL_COLLECT_ALL") << "Papi Error: " << e.what();
+            }
+            if (!papi_counter_valid)
+            {
+                std::vector<std::string> tmp_counter = {"", ""};
+
+                for (int i = 0; i < selected_papi_counter.size(); i++)
                 {
-                    std::string name;
-
-                    do
+                    tmp_counter[0] = selected_papi_counter[i];
+                    for (int j = i + 1; j < selected_papi_counter.size(); j++)
                     {
-                        int index = counter_dis[box.first](gen);
-                        name = counter_boxes[box.first][index];
-                    } while (std::find(selected_uncore_counter[box.first].begin(),
-                                 selected_uncore_counter[box.first].end(),
-                                 name) != selected_uncore_counter[box.first].end());
-
-                    logging::trace("CAL_COLLECT_ALL")
-                        << "add uncore event \"" << name << "\" for box \"" << box.first << "\"";
-                    selected_uncore_counter[box.first].push_back(name);
+                        tmp_counter[1] = selected_papi_counter[j];
+                        try
+                        {
+                            papi.set_counter(tmp_counter);
+                        }
+                        catch (papi::papi_error &e)
+                        {
+                            invalid_counter_combination[tmp_counter[0]].insert(tmp_counter[1]);
+                            invalid_counter_combination[tmp_counter[1]].insert(tmp_counter[0]);
+                            logging::error("CAL_COLLECT_ALL")
+                                << "Ivaluid combination: " << tmp_counter[1] << " and "
+                                << tmp_counter[0];
+                        }
+                    }
                 }
             }
         }
-
-        try
+        if (!papi_counter_valid)
         {
-            papi.set_counter(selected_papi_counter);
-        }
-        catch (papi::papi_error &e)
-        {
-            logging::error("CAL_COLLECT_ALL") << "Papi Error: " << e.what();
+            logging::error("CAL_COLLECT_ALL")
+                << "could not generate papi counter set. Something went wrong!";
         }
 
         try
@@ -408,8 +525,10 @@ void cal_collect_all::set_new_counter()
         {
             logging::error("CAL_COLLECT_ALL") << "Uncore Error: " << e.what();
         }
-
-        old_papi_values = papi.read_counter();
+        if (papi_counter_valid)
+        {
+            old_papi_values = papi.read_counter();
+        }
         old_uncore_values = uncore.read_counter();
     }
 

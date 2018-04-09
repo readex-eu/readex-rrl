@@ -2,7 +2,7 @@
 project (rrl)
 
 # Specify the minimum version for CMake
-cmake_minimum_required (VERSION 3.8)
+cmake_minimum_required (VERSION 3.11)
 # Set a default build type if none was specified
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -57,12 +57,13 @@ SET(RRL src/rrl/cm/cm_base.cpp
         src/rrl/call_tree/value_node.cpp
         src/rrl/control_center.cpp
         src/rrl/metric_manager.cpp
-        src/rrl/oa_event_receiver.cpp
-        src/rrl/parameter_controller.cpp
-        src/rrl/pcp_handler.cpp
+        src/rrl/filter.cpp
         src/rrl/rts_handler.cpp
+        src/rrl/parameter_controller.cpp
+        src/rrl/oa_event_receiver.cpp
+        src/rrl/pcp_handler.cpp
         src/rrl/user_parameters.cpp
-	    src/rrl/user_parametersF.cpp
+	src/rrl/user_parametersF.cpp
         )
 
 if (NOT DISABLE_CALIBRATION)
@@ -180,6 +181,9 @@ install(FILES ${UTIL_INCLUDES} DESTINATION include/util)
 
 add_subdirectory(tests)
 add_subdirectory(tmviewer)
+
+add_custom_target(test)
+add_dependencies(test test-runner)
 
 install(FILES ${project_config} DESTINATION ${config_install_dir})
 install(EXPORT ${targets_export_name} DESTINATION ${config_install_dir})

@@ -40,13 +40,7 @@ std::vector<tmm::parameter_tuple> cal_dummy::calibrate_region(std::uint32_t regi
 
 std::vector<tmm::parameter_tuple> cal_dummy::request_configuration(std::uint32_t region_id)
 {
-    std::vector<tmm::parameter_tuple> result;
-    tmm::parameter_tuple core_freq(std::hash<std::string>{}(std::string("CPU_FREQ")), 2501000);
-    tmm::parameter_tuple uncore_freq(std::hash<std::string>{}(std::string("UNCORE_FREQ")), 30);
-
-    result.push_back(core_freq);
-    result.push_back(uncore_freq);
-    return result;
+    return std::vector<tmm::parameter_tuple>();
 }
 bool cal_dummy::keep_calibrating()
 {

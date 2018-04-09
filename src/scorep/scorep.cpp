@@ -625,6 +625,30 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
     }
     scorep::calls = callbacks;
 }
+
+static bool get_requirement(SCOREP_Substrates_RequirementFlag flag)
+{
+    if (flag > SCOREP_SUBSTRATES_NUM_REQUIREMENTS)
+    {
+        return 0;
+    }
+    else if (flag == SCOREP_SUBSTRATES_REQUIREMENT_CREATE_EXPERIMENT_DIRECTORY)
+    {
+        rrl::logging::debug() << "get_requirement called";
+
+        try
+        {
+            return rrl::control_center::instance().require_experiment_directory();
+        }
+        catch (std::exception &e)
+        {
+            rrl::exception::print_uncaught_exception(e, "get_requirement");
+        }
+        return true;
+    }
+    return true;
+}
+
 }  // namespace management
 
 }  // namespace callback
@@ -664,6 +688,8 @@ static SCOREP_SubstratePluginInfo get_info()
     info.get_event_functions = scorep::callback::management::get_event_functions;
 
     info.set_callbacks = scorep::callback::management::set_callbacks;
+
+    info.get_requirement = scorep::callback::management::get_requirement;
 
     return info;
 }

@@ -37,7 +37,8 @@ control_center::control_center()
       mm_(std::make_shared<rrl::metric_manager>()),
       cal_(cal::get_calibration(mm_, tmm_->get_calibration_type())),
       rts_(tmm_, cal_),
-      oa_event_receiver_(tmm_)
+      oa_event_receiver_(tmm_),
+      filter_()
 {
     logging::info("CC") << "RRL Version: " << VERSION_RRL;
     logging::info("CC") << "GIT revision: " << GIT_REV;
@@ -151,8 +152,13 @@ void control_center::enter_region(struct SCOREP_Location *location,
          * rts might change the state of the system (depending on the output of the TMM and
          * whatever config the cal_ requested). So first call cal_.
          */
-        cal_->enter_region(regionHandle, location, metricValues);
-        rts_.enter_region(scorep::call::region_handle_get_id(regionHandle), location);
+        if (filter_.check_region(scorep::call::region_handle_get_name(regionHandle)))
+        {
+            logging::trace("CC") << scorep::call::region_handle_get_name(regionHandle)
+                                 << " is included";
+            cal_->enter_region(regionHandle, location, metricValues);
+            rts_.enter_region(scorep::call::region_handle_get_id(regionHandle), location);
+        }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = end - begin;
         invocation_duration[enter_region_i] += duration;
@@ -190,8 +196,13 @@ void control_center::exit_region(struct SCOREP_Location *location,
          * rts might change the state of the system (depending on the output of the TMM and
          * whatever config the cal_ requested). So first call cal_.
          */
-        cal_->exit_region(regionHandle, location, metricValues);
-        rts_.exit_region(scorep::call::region_handle_get_id(regionHandle), location);
+        if (filter_.check_region(scorep::call::region_handle_get_name(regionHandle)))
+        {
+            logging::trace("CC") << scorep::call::region_handle_get_name(regionHandle)
+                                 << " is included";
+            cal_->exit_region(regionHandle, location, metricValues);
+            rts_.exit_region(scorep::call::region_handle_get_id(regionHandle), location);
+        }
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = end - begin;
         invocation_duration[exit_region_i] += duration;
@@ -481,5 +492,17 @@ void control_center::user_metric(struct SCOREP_Location *location,
     double value)
 {
     mm_->user_metric(location, timestamp, counterHandle, value);
+}
+
+bool control_center::require_experiment_directory()
+{
+    if (cal_->require_experiment_directory())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 }

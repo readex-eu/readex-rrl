@@ -14,8 +14,9 @@ job1:
         - git clean -df
         - mkdir -p build
         - cd build
-        - cmake ../ -DSCOREP_CONFIG_PATH=/opt/integration_modules/scorep/TRY_READEX_online_access_call_tree_extensions/bin/ -DCMAKE_INSTALL_PREFIX=/opt/integration_modules/rrl
+        - cmake ../ -DSCOREP_CONFIG_PATH=/opt/integration_modules/scorep/READEX-RB-4/bin/ -DCMAKE_INSTALL_PREFIX=/opt/integration_modules/rrl -DEXTERN_PROTOBUF=ON -DCMAKE_PREFIX_PATH=/opt/integration_modules/protobuf/3.4.1
         - make
+        - make test
     cache:
         key: bullxmpi1.2.8.4_gcc6.3.0
         untracked: true
