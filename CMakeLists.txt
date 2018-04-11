@@ -112,7 +112,13 @@ execute_process(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_REV
   OUTPUT_STRIP_TRAILING_WHITESPACE
+  RESULT_VARIABLE error
+  ERROR_VARIABLE error_msg
 )
+if (NOT ${error} EQUAL 0)
+    message(STATUS "can't retrive git hash, set to 0")
+    set(GIT_REV "0")
+endif()
 
 set(config_install_dir lib/cmake/${PROJECT_NAME})
 set(generated_dir ${CMAKE_CURRENT_BINARY_DIR}/generated)

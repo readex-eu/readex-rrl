@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.8)
 function(git_clone_checkout target_dir)
 
     # check if we need to download the anything or just update 
-    file(GLOB SUBMODULE_FILES "${target_dir}/")
+    file(GLOB SUBMODULE_FILES "${target_dir}/" "*")
     list(LENGTH SUBMODULE_FILES COUNT_FILES)
    
     if (${COUNT_FILES} EQUAL 0)
@@ -18,7 +18,7 @@ function(git_clone_checkout target_dir)
             OUTPUT_QUIET
             )
         if (NOT ${result} EQUAL 0)
-            message(ERROR " ${error}")
+            message(SEND_ERROR "${error}")
         endif()
         execute_process(
             COMMAND
@@ -30,22 +30,7 @@ function(git_clone_checkout target_dir)
             OUTPUT_QUIET
             )
         if (NOT ${result} EQUAL 0)
-            message(ERROR " ${error}")
-        endif()
-    else()
-        message(STATUS "Updating ${target_dir}")
-        execute_process(
-            COMMAND
-                "git" "submodule" "update" "--" "${target_dir}"
-            WORKING_DIRECTORY
-                "${CMAKE_SOURCE_DIR}"
-            RESULT_VARIABLE result
-            ERROR_VARIABLE error
-            OUTPUT_QUIET
-            )
-            message(STATUS ${result})
-        if (NOT ${result} EQUAL 0)
-            message(ERROR " ${error}")
+            message(SEND_ERROR "${error}")
         endif()
     endif()
 endfunction(git_clone_checkout)
