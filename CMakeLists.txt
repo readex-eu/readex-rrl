@@ -14,7 +14,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         "MinSizeRel" "RelWithDebInfo")
 endif()
 
-option(DISABLE_CALIBRATION "disables the Calibration, and therefore Protobuf and x86 dependencies" OFF)
+option(DISABLE_CALIBRATION "Disables the calibration, due to dependencies to x86_adapt calibration is disabled by defulat." ON)
 if(NOT DISABLE_CALIBRATION)
     ADD_DEFINITIONS(-DHAVE_CALIBRATION)
 endif()
@@ -56,14 +56,16 @@ SET(RRL src/rrl/cm/cm_base.cpp
         src/rrl/call_tree/region_node.cpp
         src/rrl/call_tree/value_node.cpp
         src/rrl/control_center.cpp
-        src/rrl/metric_manager.cpp
         src/rrl/filter.cpp
         src/rrl/rts_handler.cpp
         src/rrl/parameter_controller.cpp
+        src/rrl/metric_manager.cpp
         src/rrl/oa_event_receiver.cpp
+        src/rrl/parameter_controller.cpp
         src/rrl/pcp_handler.cpp
+        src/rrl/rts_handler.cpp
         src/rrl/user_parameters.cpp
-	src/rrl/user_parametersF.cpp
+	    src/rrl/user_parametersF.cpp
         )
 
 if (NOT DISABLE_CALIBRATION)

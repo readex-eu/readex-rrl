@@ -109,10 +109,13 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
     The syntax of the filter file is based on scorep filter files, but there are some restrictions.
     * the keyword MANGLED is currently not supported
     * only one region name per line is allowed 
-    * region names can be intended
+    * region names can be intended 
     * region names with shell wildcard patterns are supported
-    * region names on the same line as `INCLUDE` or `EXCLUDE` are not supported
-    * You can use comments, they start with `#` and end with a new line. If a region name contains `#` you have to escape it with a `\`. 
+    * region names on the same line with `INCLUDE` or `EXCLUDE` are not supported
+	* You can use comments, they start with `#` and end with a new line. If a region name contains `#` you have to escape it with a `\`. 
+
+	
+* `RRL_CHECK_ROOT` property of the DTA TMM. It set to "false", this will disable the check for the root region. This is needed for calibration.
 
 #### Calibration specific varibales
 
