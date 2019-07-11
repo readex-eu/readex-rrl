@@ -34,8 +34,8 @@ struct node_info
 {
     node_info() = default;
     ~node_info() = default;
-    node_info(const node_info&) = default;
-    node_info(node_info&&) = default;
+    node_info(const node_info &) = default;
+    node_info(node_info &&) = default;
 
     node_info(std::uint32_t region_id, node_type type) : region_id(region_id), type(type)
     {
@@ -73,7 +73,7 @@ class base_node
      */
 
 public:
-    base_node(base_node* parent, node_info info);
+    base_node(base_node *parent, node_info info);
     virtual ~base_node();
 
     void start_measurment();
@@ -82,15 +82,15 @@ public:
     /** enter a node with the type std::uint32_t
      * please look at the specialisation for information when to use.
      */
-    virtual base_node* enter_node(std::uint32_t);
+    virtual base_node *enter_node(std::uint32_t);
     /** enter a node with the type std::string
      * please look at the specialisation for information when to use.
      */
-    virtual base_node* enter_node(std::string&);
+    virtual base_node *enter_node(std::string &);
 
     /* return to the parent node.
      */
-    virtual base_node* return_to_parent();
+    virtual base_node *return_to_parent();
 
     /** resets the state for all nodes to its default values.
      *
@@ -135,19 +135,19 @@ public:
 
     /** saves the configuration, and triggers parent_->set_child_with_configuration().
      */
-    virtual void set_configuration(const std::vector<tmm::parameter_tuple>& configuration);
+    virtual void set_configuration(const std::vector<tmm::parameter_tuple> &configuration);
 
     /** returns the configuration
      *
      */
-    virtual const std::vector<tmm::parameter_tuple>& get_configuration();
+    virtual const std::vector<tmm::parameter_tuple> &get_configuration();
 
     /** ensures that the parent knows that a some child, a child of a child, ... has a config set.
      *
      */
     virtual void set_child_with_configuration();
 
-    base_node* parent_;
+    base_node *parent_;
     node_info info;
 
 private:
@@ -157,10 +157,10 @@ private:
 };
 
 template <typename NodeType, typename ParentType, typename ValueType>
-NodeType* add_and_get(ParentType* parent,
+NodeType *add_and_get(ParentType *parent,
     node_info info,
     ValueType value,
-    std::unordered_map<ValueType, std::unique_ptr<NodeType>>& map)
+    std::unordered_map<ValueType, std::unique_ptr<NodeType>> &map)
 {
     auto node_it = map.find(value);
     if (node_it != map.end())
@@ -175,9 +175,9 @@ NodeType* add_and_get(ParentType* parent,
 }
 
 template <typename NodeType, typename ParentType>
-NodeType* add_and_get(ParentType* parent,
+NodeType *add_and_get(ParentType *parent,
     node_info info,
-    std::unordered_map<std::uint32_t, std::unique_ptr<NodeType>>& map)
+    std::unordered_map<std::uint32_t, std::unique_ptr<NodeType>> &map)
 {
     auto node_it = map.find(info.region_id);
     if (node_it != map.end())
@@ -192,22 +192,22 @@ NodeType* add_and_get(ParentType* parent,
 }
 
 inline void get_durations(std::chrono::milliseconds significant_threshold,
-    std::chrono::milliseconds& significant_durations,
-    std::chrono::milliseconds& insignificant_durations,
-    bool& any_sig_child)
+    std::chrono::milliseconds &significant_durations,
+    std::chrono::milliseconds &insignificant_durations,
+    bool &any_sig_child)
 {
     return;
 }
 
 template <class NodeType, typename ValueType, class... RemainingMaps>
 void get_durations(std::chrono::milliseconds significant_threshold,
-    std::chrono::milliseconds& significant_durations,
-    std::chrono::milliseconds& insignificant_durations,
-    bool& any_sig_child,
-    const std::unordered_map<ValueType, std::unique_ptr<NodeType>>& map,
-    const RemainingMaps&... maps)
+    std::chrono::milliseconds &significant_durations,
+    std::chrono::milliseconds &insignificant_durations,
+    bool &any_sig_child,
+    const std::unordered_map<ValueType, std::unique_ptr<NodeType>> &map,
+    const RemainingMaps &... maps)
 {
-    for (const auto& elem : map)
+    for (const auto &elem : map)
     {
         auto duration = elem.second->info.duration;
         if (duration >= significant_threshold)
@@ -226,7 +226,8 @@ void get_durations(std::chrono::milliseconds significant_threshold,
         any_sig_child,
         maps...);
 }
-}
-}
+
+} // namespace call_tree
+} // namespace rrl
 
 #endif /* INCLUDE_RRL_CALL_TREE_HPP_ */

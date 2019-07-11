@@ -5,9 +5,9 @@
  *      Author: gocht
  */
 
+#include <cal/cal_collect_fix.hpp>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <cal/cal_collect_fix.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -126,8 +126,14 @@ cal_collect_fix::cal_collect_fix(std::shared_ptr<metric_manager> mm) : calibrati
         }
     }
 
-    papi.set_counter(papi_box);
-    uncore.set_counters(uncore_boxes);
+    if (!papi_box.empty())
+    {
+        papi.set_counter(papi_box);
+    }
+    if (!uncore_boxes.empty())
+    {
+        uncore.set_counters(uncore_boxes);
+    }
 
     old_papi_values = papi.read_counter();
     old_uncore_values = uncore.read_counter();
@@ -359,12 +365,14 @@ void cal_collect_fix::calc_counter_values(
     last_event = std::chrono::high_resolution_clock::now();
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_fix::calibrate_region(uint32_t)
+std::vector<tmm::parameter_tuple> cal_collect_fix::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_fix::request_configuration(uint32_t)
+std::vector<tmm::parameter_tuple> cal_collect_fix::request_configuration(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
@@ -373,5 +381,5 @@ bool cal_collect_fix::keep_calibrating()
 {
     return true;
 }
-}
-}
+} // namespace cal
+} // namespace rrl

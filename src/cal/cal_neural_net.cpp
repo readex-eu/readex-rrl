@@ -5,11 +5,11 @@
  *      Author: gocht
  */
 
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <algorithm>
 #include <cal/cal_neural_net.hpp>
 #include <cmath>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unordered_map>
 #include <vector>
 
@@ -37,106 +37,113 @@ cal_neural_net::cal_neural_net(std::shared_ptr<metric_manager> mm) : calibration
     std::map<std::string, std::vector<std::string>> uncore_boxes;
     std::vector<std::string> papi_box;
 
-    auto counter_filename = rrl::environment::get("COUNTER", "");
-    if (counter_filename == "")
+    auto filename = rrl::environment::get("COUNTER", "");
+    if (filename == "")
     {
         logging::warn("CAL_NEURAL_NET") << "no counter file given!";
-        return;
     }
     else
     {
-        std::ifstream counter_file(counter_filename, std::ios_base::in);
+        std::ifstream counter_file(filename, std::ios_base::in);
         if (!counter_file.is_open())
         {
             logging::error("CAL_NEURAL_NET") << "can't open counter file!";
             return;
         }
-
+        collect_counter = true;
         counter_file >> counter;
     }
 
-    auto counter_order_filename = rrl::environment::get("COUNTER_ORDER", "");
-    if (counter_order_filename == "")
+    auto counter_data_filename = rrl::environment::get("COUNTER_DATA", "");
+    if (counter_data_filename == "")
     {
-        logging::warn("CAL_NEURAL_NET") << "no counter order file given!";
+        logging::error("CAL_NEURAL_NET") << "no COUNTER_DATA file given!";
+        return;
     }
     else
     {
-        std::ifstream counter_order_file(counter_order_filename, std::ios_base::in);
-        if (!counter_order_file.is_open())
+        std::ifstream counter_data_file(counter_data_filename, std::ios_base::in);
+        if (!counter_data_file.is_open())
         {
-            logging::error("CAL_NEURAL_NET") << "can't open counter file!";
+            logging::error("CAL_NEURAL_NET") << "can't open COUNTER_DATA file!";
             return;
         }
-        counter_order_file >> counter_order;
+        counter_data_file >> counter_data;
     }
 
-    auto modle_path = rrl::environment::get("MODEL_PATH", "");
-    if (modle_path == "")
+    if (collect_counter)
     {
-        logging::error("CAL_NEURAL_NET") << "no model path given!";
-        return;
-    }
+        int id_counter = 0;
 
-    try
-    {
-        tf_modell = std::make_unique<tensorflow::modell>(modle_path);
-    }
-    catch (tensorflow::error &e)
-    {
-        logging::fatal("CAL_NEURAL_NET") << "error during model initalisation: " << e.what();
-        return;
-    }
-    catch (tensorflow::tf_error &e)
-    {
-        logging::fatal("CAL_NEURAL_NET")
-            << "Tensorflow had an error during intalisation: " << e.what();
-        return;
-    }
-
-    int id_counter = 0;
-
-    try
-    {
-        boxes_ordered = counter_order["data"];
-        for (auto counter : boxes_ordered)
+        for (auto &box : counter.get<std::unordered_map<std::string, nlohmann::json>>())
         {
-            logging::debug("CAL_NEURAL_NET")
-                << "add box: \"" << counter[0].get<std::string>() << "\" with id: " << id_counter;
-            for (auto event :
-                counter_order["box_order"][counter[0].get<std::string>()]["counter_order"]
-                    .get<std::vector<std::string>>())
             {
-                if (counter[0] == "hsw_ep")
+                id_counter++;
+                logging::trace("CAL_NEURAL_NET")
+                    << "added box: \"" << box.first << "\" with id: " << id_counter;
+            }
+
+            for (auto &c : box.second["events"].get<std::vector<nlohmann::json>>())
+            {
+                std::string c_name = c["name"].get<std::string>();
+
+                if (c["umasks"].size() > 0)
                 {
-                    papi_box.push_back(counter[2].get<std::string>());
+                    for (auto &u : c["umasks"].get<std::vector<std::string>>())
+                    {
+                        std::string name = c_name + ":";
+                        name += u;
+                        id_counter++;
+                        if (box.first == "hsw_ep")
+                        {
+                            papi_box.push_back(name);
+                        }
+                        else
+                        {
+                            uncore_boxes[box.first].push_back(name);
+                        }
+                        logging::trace("CAL_NEURAL_NET")
+                            << "added counter: \"" << name << "\" with id: " << id_counter;
+                    }
                 }
                 else
                 {
-                    uncore_boxes[counter[0].get<std::string>()].push_back(
-                        counter[2].get<std::string>());
+                    id_counter++;
+                    if (box.first == "hsw_ep")
+                    {
+                        papi_box.push_back(c_name);
+                    }
+                    else
+                    {
+                        uncore_boxes[box.first].push_back(c_name);
+                    }
+
+                    logging::trace("CAL_NEURAL_NET")
+                        << "added counter: \"" << c_name << "\" with id: " << id_counter;
                 }
             }
         }
     }
-    catch (nlohmann::json::parse_error &e)
+
+    if (!papi_box.empty())
     {
-        logging::fatal("CAL_NEURAL_NET") << "failed to pares the COUNTER_ORDER json: " << e.what();
-        return;
+        papi.set_counter(papi_box);
+    }
+    if (!uncore_boxes.empty())
+    {
+        uncore.set_counters(uncore_boxes);
     }
 
-    papi.set_counter(papi_box);
-    uncore.set_counters(uncore_boxes);
-
     // set default values, which we used to collect the data
-    tmm::parameter_tuple core_freq(std::hash<std::string>{}(std::string("CPU_FREQ")), 2500000);
-    tmm::parameter_tuple uncore_freq(std::hash<std::string>{}(std::string("UNCORE_FREQ")), -1);
-    /**TODO WTF. firgure out how to set the defaul vaule.
-     * Probalby by passing -1 to the uncore plugin ...
-     */
+    tmm::parameter_tuple core_freq(std::hash<std::string>{}(std::string("CPU_FREQ")), 2600000);
+    tmm::parameter_tuple uncore_freq(std::hash<std::string>{}(std::string("UNCORE_FREQ")), 30);
     default_config.push_back(core_freq);
     default_config.push_back(uncore_freq);
 
+    old_papi_values = papi.read_counter();
+    old_uncore_values = uncore.read_counter();
+
+    last_event = std::chrono::high_resolution_clock::now();
     initialised = true;
 }
 
@@ -151,94 +158,105 @@ void cal_neural_net::init_mpp()
 void cal_neural_net::enter_region(
     SCOREP_RegionHandle region_handle, SCOREP_Location *locationData, std::uint64_t *metricValues)
 {
-    if (initialised)
-    {
-        auto region_id = scorep::call::region_handle_get_id(region_handle);
-        logging::trace("CAL_NEURAL_NET") << "Enter region with id: " << region_id;
-        if (region_id == calibrat_region_id)
-        {
-            calibrat_region_id_count++;
-        }
-    }
+    auto region_id = scorep::call::region_handle_get_id(region_handle);
+    current_callpath.push_back(tmm::simple_callpath_element(region_id, tmm::identifier_set()));
+
+    papi_measurment_map[current_callpath] = papi.read_counter();
+    uncore_measurment_map[current_callpath] = uncore.read_counter();
+    time_measurment_map[current_callpath] = std::chrono::high_resolution_clock::now();
 }
 
 void cal_neural_net::exit_region(
     SCOREP_RegionHandle region_handle, SCOREP_Location *locationData, std::uint64_t *metricValues)
 {
-    if (initialised)
+    auto region_id = scorep::call::region_handle_get_id(region_handle);
+    if (current_callpath.back().region_id != region_id)
     {
-        auto region_id = scorep::call::region_handle_get_id(region_handle);
-        logging::trace("CAL_COLLECT_FIX") << "Exit region with id: " << region_id;
-
-        if (region_id == calibrat_region_id)
-        {
-            calibrat_region_id_count--;
-        }
-        if (calibrat_region_id_count == 0)
-        {
-            calc_counter_values();
-            calibrat_region_id = -1;
-            calibrating = false;
-        }
+        logging::fatal("Q_LEARNING_V2") << "region_ids dont match";
     }
-}
 
-/** This function reads the counter values, and writes the difference to the given protobuf stream.
- *
- * If collect_counters is set to false, the duration between this and the last
- * event and the last and current region id are saved.
- *
- *
- */
-void cal_neural_net::calc_counter_values()
-{
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::high_resolution_clock::now() - last_event);
-
-    auto new_papi_values = papi.read_counter();
-    auto new_uncore_values = uncore.read_counter();
-
-    std::vector<float> counter_values;
-
-    for (auto box : boxes_ordered)
+    if (current_callpath.back().calibrate)
     {
-        auto box_name = counter[0].get<std::string>();
-        auto node = counter[1].get<int>();
-        auto counter_name = counter[2].get<std::string>();
-        auto mean = counter[3].get<float>();
-        auto std = counter[0].get<float>();
-        if (box_name == "hsw_ep")
+        auto current_papi_values = papi.read_counter();
+        auto current_uncore_values = uncore.read_counter();
+        auto current_time = std::chrono::high_resolution_clock::now();
+
+        auto old_papi_values = papi_measurment_map[current_callpath];
+        auto old_uncore_values = uncore_measurment_map[current_callpath];
+        auto old_time = time_measurment_map[current_callpath];
+
+        std::vector<std::string> counter_names;
+        std::vector<float> counter_values;
+        for (int core = 0; core < current_papi_values.size(); core++)
         {
-            float value =
-                (new_papi_values[node][counter_name] - old_papi_values[node][counter_name]) /
-                duration.count();
-            counter_values.push_back((value - mean) / std);
+            for (auto const &counter : current_papi_values[core])
+            {
+                counter_values.push_back(counter.second - old_papi_values[core][counter.first]);
+                counter_names.push_back(counter.first);
+            }
         }
-        else
+        for (auto &current_box : current_uncore_values)
         {
-            float value = (new_uncore_values[box_name][node][counter_name] -
-                              old_uncore_values[box_name][node][counter_name]) /
-                          duration.count();
-            counter_values.push_back((value - mean) / std);
+            auto box_name = current_box.first;
+            auto old_box = old_uncore_values[box_name];
+
+            for (size_t i = 0; i < current_box.second.size(); i++)
+            {
+                for (auto &counter : current_box.second[i])
+                {
+                    counter_values.push_back(old_box[i][counter.first] - counter.second);
+                    auto counter_name = box_name;
+                    counter_name += "::";
+                    counter_name += counter.first;
+                    counter_names.push_back(counter_name);
+                }
+            }
+        }
+
+        int enumeration = 0;
+        for (const auto &elem : counter_data["event_data"])
+        {
+            auto box_name = elem[0].get<std::string>();
+            auto node = elem[1].get<int>();
+            auto counter_name = elem[2].get<std::string>();
+            auto mean = counter_data["counter_mean"][enumeration].get<float>();
+            auto std = counter_data["counter_std"][enumeration].get<float>();
+            enumeration++;
+            if (box_name == "hsw_ep")
+            {
+                float value = (current_papi_values[node][counter_name] -
+                                  old_papi_values[node][counter_name]) /
+                              (std::chrono::duration<double>(current_time - old_time).count());
+                counter_values.push_back((value - mean) / std);
+            }
+            else
+            {
+                float value = (current_uncore_values[box_name][node][counter_name] -
+                                  old_uncore_values[box_name][node][counter_name]) /
+                              (std::chrono::duration<double>(current_time - old_time).count());
+                counter_values.push_back((value - mean) / std);
+            }
         }
 
         /**
          * good_freq[0] = fc
          * good_freq[1] = fu
          */
-        auto good_freq = tf_modell->get_prediction(counter_values, 2);
-        float fc = good_freq[0];
-        float fu = good_freq[1];
+        auto good_freq = tf_modell->get_prediction(counter_values);
+        float fc = good_freq[0] * counter_data["std_fc"].get<float>() +
+                   counter_data["mean_fc"].get<float>();
+        float fu = good_freq[1] * counter_data["std_fu"].get<float>() +
+                   counter_data["mean_fu"].get<float>();
 
         logging::trace("CAL_NEURAL_NET") << "got config:\n\tf_c:" << fc << "\n\tf_u" << fu;
 
         /** check bounds
          */
 
-        fc = std::ceil(fc * 10) * 1e2;  // MHz
-        fu = std::ceil(fc * 10) * 1e2;  // MHz
+        fc = std::ceil(fc * 10) * 1e2; // MHz
+        fu = std::ceil(fc * 10) * 1e2; // MHz
 
-        fc = std::max<float>(2501, fc);
+        fc = std::max<float>(2601, fc);
         fc = std::min<float>(1200, fc);
 
         fu = std::max<float>(3000, fu);
@@ -253,33 +271,34 @@ void cal_neural_net::calc_counter_values()
         config.push_back(core_freq);
         config.push_back(uncore_freq);
 
-        calibrated_regions[calibrat_region_id] = config;
+        auto call_tree_elem = callpath_rts_map[current_callpath];
+        calibrated_regions[call_tree_elem] = config;
     }
+
+    current_callpath.pop_back();
 }
 
-std::vector<tmm::parameter_tuple> cal_neural_net::calibrate_region(uint32_t region_id)
+/** Remebers the regions to be calibrate
+ *
+ */
+std::vector<tmm::parameter_tuple> cal_neural_net::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
-    if (initialised && !calibrating)
-    {
-        calibrat_region_id = region_id;
-        calibrat_region_id_count++;
+    current_callpath.back().calibrate = true;
+    callpath_rts_map[current_callpath] = current_calltree_elem_->build_callpath();
 
-        old_papi_values = papi.read_counter();
-        old_uncore_values = uncore.read_counter();
-        last_event = std::chrono::high_resolution_clock::now();
-
-        calibrating = true;
-
-        return default_config;
-    }
-    else
-    {
-        return std::vector<tmm::parameter_tuple>();
-    }
+    return default_config;
 }
 
-std::vector<tmm::parameter_tuple> cal_neural_net::request_configuration(uint32_t region_id)
+/** Returns values from calibration
+ *
+ */
+std::vector<tmm::parameter_tuple> cal_neural_net::request_configuration(
+    call_tree::base_node *current_calltree_elem_)
 {
+
+    auto call_tree_elem = callpath_rts_map[current_callpath];
+
     if (initialised)
     {
         if (calibrating)
@@ -289,7 +308,7 @@ std::vector<tmm::parameter_tuple> cal_neural_net::request_configuration(uint32_t
             return std::vector<tmm::parameter_tuple>();
         }
 
-        auto it = calibrated_regions.find(region_id);
+        auto it = calibrated_regions.find(current_calltree_elem_->build_callpath());
         if (it != calibrated_regions.end())
         {
             return it->second;
@@ -297,9 +316,9 @@ std::vector<tmm::parameter_tuple> cal_neural_net::request_configuration(uint32_t
         else
         {
             logging::error("CAL_NEURAL_NET")
-                << "region " << region_id
+                << "region " << current_calltree_elem_->info.region_id
                 << " not found in already calibrated regions. Returning default config.";
-            return std::vector<tmm::parameter_tuple>();
+            return default_config;
         }
     }
     return std::vector<tmm::parameter_tuple>();
@@ -308,5 +327,5 @@ bool cal_neural_net::keep_calibrating()
 {
     return false;
 }
-}
-}
+} // namespace cal
+} // namespace rrl

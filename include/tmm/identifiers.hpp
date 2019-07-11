@@ -23,6 +23,7 @@ namespace tmm
  */
 template <typename T> struct identifier
 {
+    inline identifier() = default;
     /** basic constructor, which allows to initalise a struct on creation.
      *
      * @param id hash of the parameter name
@@ -31,6 +32,8 @@ template <typename T> struct identifier
     inline identifier(std::size_t id, T value) : id(id), value(value)
     {
     }
+
+    inline identifier &operator=(const identifier &other) = default;
 
     inline bool operator==(const identifier &other) const noexcept
     {
@@ -47,8 +50,8 @@ template <typename T> struct identifier
         return strfmt("(", id, ", ", value, ")");
     }
 
-    std::size_t id; /**< identifier id */
-    T value;        /**< identifier value */
+    std::size_t id = 0; /**< identifier id */
+    T value = 0;        /**< identifier value */
 };
 
 template <typename T> inline std::ostream &operator<<(std::ostream &s, const identifier<T> &id)
@@ -72,6 +75,8 @@ struct identifier_set
           strings(std::vector<identifier<std::string>>())
     {
     }
+
+    inline identifier_set &operator=(const identifier_set &other) = default;
 
     inline bool operator==(const identifier_set &other) const noexcept
     {
@@ -134,8 +139,8 @@ inline std::ostream &operator<<(std::ostream &s, const identifier_set &id_set)
     }
     return s;
 }
-}
-}
+} // namespace tmm
+} // namespace rrl
 
 namespace std
 {
@@ -161,6 +166,6 @@ template <> struct hash<rrl::tmm::identifier_set>
         return std::hash<std::string>{}(s);
     }
 };
-}
+} // namespace std
 
 #endif

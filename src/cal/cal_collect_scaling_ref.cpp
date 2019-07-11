@@ -167,7 +167,8 @@ void cal_collect_scaling_ref::exit_region(
     }
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(uint32_t unsignedInt)
+std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     logging::trace("cal_collect_scaling_ref") << "calibration invoked";
 
@@ -175,7 +176,7 @@ std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(uint
 }
 
 std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::request_configuration(
-    std::uint32_t region_id)
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }

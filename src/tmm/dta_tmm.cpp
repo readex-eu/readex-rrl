@@ -47,9 +47,17 @@ dta_tmm::dta_tmm() : tuning_model_manager()
     {
         cal_type = cal_scaling_ref;
     }
+    else if (cal_module == "qlearn")
+    {
+        cal_type = cal_qlearn;
+    }
     else if (cal_module == "cal_neural_net")
     {
         cal_type = cal_neural_net;
+    }
+    else if (cal_module == "q_learning_v2")
+    {
+        cal_type = q_learning_v2;
     }
     else
     {
@@ -231,5 +239,5 @@ void dta_tmm::set_changed(bool val) noexcept
 {
     changed = val;
 }
-}
-}
+} // namespace tmm
+} // namespace rrl

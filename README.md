@@ -102,6 +102,7 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
  * `collect_all` for the first training step, to build the correlation between all counters
  * `collect_fix` for the second training step, to collect the training data of the NN
  * `collect_scaling` for trainign to find optimal configuration for regions.
+ * `q_learning_v2` for trainign to find optimal configuration for regions.
  * `cal_dummy` dummy calibration mechanism. Just returns 2.501 GHz core and 3 GHz uncore freq.
 
 * `SCOREP_RRL_FILTERING_FILE` file for filtering regions with a specific name  
@@ -127,6 +128,30 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
 ##### `collect_fix`
 
 ##### `collect_scaling`
+* `SCOREP_RRL_CAL_ENERGY` specifies the name for the energy metric, which is used for learning
+* `SCOREP_RRL_FREQUNECIES_SEP` sepperator for frequnency seperations
+* `SCOREP_RRL_AVAILABLE_CORE_FREQUNECIES` sepperator seperated list with all available core frequnecies
+* `SCOREP_RRL_AVAILABLE_UNCORE_FREQUNECIES` sepperator seperated list with all available uncore frequnecies
+
+##### `q_learning_v2`
+* `SCOREP_RRL_CAL_ENERGY` specifies the name for the energy metric, which is used for learning
+    * exmaple: `x86_energy/BLADE/E` for the [`x86_energy_sync_plugin`](https://github.com/score-p/scorep_plugin_x86_energy) 
+* `SCOREP_RRL_FREQUNECIES_SEP` sepperator for frequnency seperations
+* `SCOREP_RRL_AVAILABLE_CORE_FREQUNECIES` sepperator seperated list with all available core frequnecies
+* `SCOREP_RRL_AVAILABLE_UNCORE_FREQUNECIES` sepperator seperated list with all available uncore frequnecies
+* `SCOREP_RRL_Q_RESULT`
+    outputfile of the Q tabel and enrgy map. A json file will be saved.
+    The location is either the full path given if `SCOREP_RRL_REUSE_Q_RESULT` is true,
+    or inside the `SCOREP_EXPERIMENT_DIRECTORY` if `SCOREP_RRL_REUSE_Q_RESULT` is false.
+* `SCOREP_RRL_REUSE_Q_RESULT`
+    set to `true` if the results form the last experiment shall be reused , `false` default 
+* `SCOREP_RRL_ALPHA`
+    learning rate for the Q_Learning, 0.1 default
+* `SCOREP_RRL_GAMMA`
+    discount rate, 0.5 default
+* `SCOREP_RRL_EPSILON`
+    probablility for a random action, 0.25 default
+
 
 ### If anything fails:
 

@@ -49,8 +49,10 @@ public:
         SCOREP_Location *locationData,
         std::uint64_t *metricValues) override;
 
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(uint32_t) override;
-    virtual std::vector<tmm::parameter_tuple> request_configuration(uint32_t) override;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) override;
+    virtual std::vector<tmm::parameter_tuple> request_configuration(
+        call_tree::base_node *current_calltree_elem_) override;
     virtual bool keep_calibrating() override;
 
     bool require_experiment_directory() override

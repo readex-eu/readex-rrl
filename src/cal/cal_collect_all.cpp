@@ -338,7 +338,7 @@ std::vector<std::string> cal_collect_all::gen_hsw_ep_counter()
 {
     std::vector<std::string> selected_papi_counter;
     int offcore_count = 0;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         std::string name = "";
         bool valid_new_counter = true;
@@ -678,12 +678,14 @@ void cal_collect_all::calc_counter_values(std::uint32_t new_region_id,
     data.push_back(tmp_data);
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_all::calibrate_region(uint32_t)
+std::vector<tmm::parameter_tuple> cal_collect_all::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_all::request_configuration(uint32_t)
+std::vector<tmm::parameter_tuple> cal_collect_all::request_configuration(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
