@@ -73,6 +73,8 @@ void dta_tmm::register_region(const std::string &region_name,
     const std::string &file_name,
     std::uint32_t scorep_id)
 {
+    reg_name_reg_id_map.emplace(region_name, scorep_id);
+    reg_id_reg_name_map.emplace(scorep_id, region_name);
 }
 
 region_status dta_tmm::is_significant(std::uint32_t region_id)
@@ -238,6 +240,16 @@ bool dta_tmm::has_changed() noexcept
 void dta_tmm::set_changed(bool val) noexcept
 {
     changed = val;
+}
+
+std::uint32_t dta_tmm::get_id_from_region_name(const std::string region_name) noexcept
+{
+    return reg_name_reg_id_map[region_name];
+}
+
+std::string dta_tmm::get_name_from_region_id(const std::uint32_t region_id) noexcept
+{
+    return reg_id_reg_name_map[region_id];
 }
 } // namespace tmm
 } // namespace rrl

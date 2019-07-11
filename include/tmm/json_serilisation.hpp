@@ -62,13 +62,16 @@ inline void from_json(const nlohmann::json &j, identifier_set &i)
 
 inline void to_json(nlohmann::json &j, const simple_callpath_element &s)
 {
-    j = nlohmann::json{
-        {"region_id", s.region_id}, {"id_set", s.id_set}, {"calibrate", s.calibrate}};
+    auto tmm = tmm::get_tuning_model_manager("");
+    j = nlohmann::json{{"id_set", s.id_set},
+        {"calibrate", s.calibrate},
+        {"fn_name", tmm->get_name_from_region_id(s.region_id)}};
 }
 
 inline void from_json(const nlohmann::json &j, simple_callpath_element &s)
 {
-    s.region_id = j.at("region_id").get<std::uint32_t>();
+    auto tmm = tmm::get_tuning_model_manager("");
+    s.region_id = tmm->get_id_from_region_name(j.at("fn_name").get<std::string>());
     s.id_set = j.at("id_set").get<identifier_set>();
     s.calibrate = j.at("calibrate").get<bool>();
 }

@@ -58,10 +58,6 @@ public:
 private:
     bool initialised;
 
-    std::shared_ptr<metric_manager> mm_;
-    int energy_metric_id = -1;
-    SCOREP_MetricValueType energy_metric_type = SCOREP_INVALID_METRIC_VALUE_TYPE;
-
     std::chrono::time_point<std::chrono::high_resolution_clock> last_event;
     std::uint32_t old_region_id;
     add_cal_info::region_event old_region_event;
@@ -76,7 +72,7 @@ private:
         add_cal_info::region_event new_region_event,
         std::uint64_t *metricValues);
 };
-}
-}
+} // namespace cal
+} // namespace rrl
 
 #endif /* SRC_CAL_COLLECT_SCALING_REF_H_ */

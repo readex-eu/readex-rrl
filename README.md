@@ -68,11 +68,10 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
     If set to any other value, WARN is used. Case in-sensitive.
 
 * `SCOREP_RRL_CHECK_IF_RESET`
-    Sets the behaviour of the settings stack of the configuration manager:
+    Sets the behaviour of the settings stack of the configuration manager.
     Possible values are:
-    The default value is 'reset': Every change will be saved on the settings stack.
-    'no_reset' means that only the default and current values of parameters will be saved.
-    New parameter values overwrites the current values.
+    * `no_reset`: only the default and current values of parameters will be saved, new parameter values overwrites the current values. 
+    * `reset`: Every change will be saved on the settings stack (default)
     
 * `SCOREP_TUNING_PLUGINS`, `SCOREP_RRL_PLUGINS`
     Sets the parameter plugins to load. Please be sure the path to the libs is
@@ -99,11 +98,11 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
 * `SCOREP_RRL_COUNTER_RESULT` filename of the resulting protobuf. Will be written in the Score-P exp. dir under "rrl/"
 
 * `SCOREP_RRL_CAL_MODULE` calibration module to use. Currently available:
- * `collect_all` for the first training step, to build the correlation between all counters
- * `collect_fix` for the second training step, to collect the training data of the NN
- * `collect_scaling` for trainign to find optimal configuration for regions.
- * `q_learning_v2` for trainign to find optimal configuration for regions.
- * `cal_dummy` dummy calibration mechanism. Just returns 2.501 GHz core and 3 GHz uncore freq.
+    * `collect_all` for the first training step, to build the correlation between all counters
+    * `collect_fix` for the second training step, to collect the training data of the NN
+    * `collect_scaling` for trainign to find optimal configuration for regions.
+    * `q_learning_v2` for trainign to find optimal configuration for regions.
+    * `cal_dummy` dummy calibration mechanism. Just returns 2.501 GHz core and 3 GHz uncore freq.
 
 * `SCOREP_RRL_FILTERING_FILE` file for filtering regions with a specific name  
     If no filtering file is specified, than all regions will be included.
@@ -116,9 +115,11 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
 	* You can use comments, they start with `#` and end with a new line. If a region name contains `#` you have to escape it with a `\`. 
 
 	
-* `RRL_CHECK_ROOT` property of the DTA TMM. It set to "false", this will disable the check for the root region. This is needed for calibration.
+* `SCOREP_RRL_CHECK_ROOT` property of the DTA TMM. It set to "false", this will disable the check for the root region. This is needed for calibration.
 
 #### Calibration specific varibales
+
+Please set `SCOREP_RRL_CHECK_ROOT` to false, in order to activate calibration.
 
 ##### `collect_all`
 * `SCOREP_RRL_IVALID_COMBINATION`
@@ -144,7 +145,12 @@ variable `SCOREP_SUBSTRATE_PLUGINS`.
     The location is either the full path given if `SCOREP_RRL_REUSE_Q_RESULT` is true,
     or inside the `SCOREP_EXPERIMENT_DIRECTORY` if `SCOREP_RRL_REUSE_Q_RESULT` is false.
 * `SCOREP_RRL_REUSE_Q_RESULT`
-    set to `true` if the results form the last experiment shall be reused , `false` default 
+    set to `true` if the results form the last experiment shall be reused , `false` default
+* `SCOREP_RRL_IGNORE_HIT_COUNT`
+    bool, takes only effect if `SCOREP_RRL_REUSE_Q_RESULT` is set.
+    Transforms the algorithm into a real q-learning one, the hitcount will not be loaded but regenerated.
+    Moreover, not the state with the most occurences is chosses as starting point but the default one.
+          
 * `SCOREP_RRL_ALPHA`
     learning rate for the Q_Learning, 0.1 default
 * `SCOREP_RRL_GAMMA`

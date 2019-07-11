@@ -18,6 +18,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <json.hpp>
 
 namespace rrl
 {
@@ -60,7 +61,9 @@ private:
     SCOREP_MetricValueType energy_metric_type = SCOREP_INVALID_METRIC_VALUE_TYPE;
 
     bool reuse_q_file = false;
+    bool ignore_hit_count = false;
     std::string save_filename = "";
+    nlohmann::json json;
 
     int rank = 0;
 
@@ -77,8 +80,9 @@ private:
 
     std::unordered_map<std::vector<tmm::simple_callpath_element>, double> energy_measurment_map;
     std::unordered_map<std::vector<tmm::simple_callpath_element>, rts_id> callpath_rts_map;
+    std::unordered_map<rts_id, bool> was_read;
 
-    using state_t = std::array<int, 2>;
+    using state_t = std::array<size_t, 2>;
     using action_t = std::array<int, 2>;
     template <class T> using state_vector = std::vector<std::vector<T>>; // [core_freq][uncore_freq]
     template <class T>
@@ -99,6 +103,7 @@ private:
     std::mt19937 gen;      // Standard mersenne_twister_engine seeded with rd()
 
     void initalise_q_array(state_vector<action_vector<double>> &q_array);
+    void initalise_state_action(const rts_id &rts);
 
     std::tuple<q_learning_v2::action_t, double> max_Q(
         const state_vector<action_vector<double>> &q_array,

@@ -50,11 +50,14 @@ public:
     virtual bool has_changed() noexcept override;
     virtual void set_changed(bool) noexcept override;
 
+    virtual std::string get_name_from_region_id(std::uint32_t region_id) noexcept override;
+    virtual std::uint32_t get_id_from_region_name(std::string region_name) noexcept override;
+
 private:
     tuning_model tm_;
     std::unordered_map<uint32_t, region_id> registered_regions_;
 };
-}
-}
+} // namespace tmm
+} // namespace rrl
 
 #endif

@@ -182,5 +182,17 @@ bool rat_tmm::has_changed() noexcept
 void rat_tmm::set_changed(bool) noexcept
 {
 }
+
+std::string rat_tmm::get_name_from_region_id(const std::uint32_t region_id) noexcept
+{
+    logging::error("RAT_TMM") << "get_name_from_region_id not implemented for rat_tmm";
+    return "";
 }
+
+std::uint32_t rat_tmm::get_id_from_region_name(const std::string region_name) noexcept
+{
+    logging::error("RAT_TMM") << "get_id_from_region_name not implemented for rat_tmm";
+    return 0;
 }
+} // namespace tmm
+} // namespace rrl

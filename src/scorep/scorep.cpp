@@ -237,7 +237,7 @@ static void exit_regionCb(struct SCOREP_Location *location,
 }
 
 /**
- * called from threading instrumentation adapters before a thread team is forked, e.g., before an
+ * Called from threading instrumentation adapters before a thread team is forked, e.g., before an
  * OpenMP parallel region
  *
  * @param location location which creates this event
@@ -462,7 +462,7 @@ static void new_definition_handle(SCOREP_AnyHandle handle, SCOREP_HandleType typ
     }
 }
 
-/** This function is called form scorep before MPI_Init() is done.
+/** This function is called form Score-P before MPI_Init() is done.
  *
  */
 static int init()
@@ -473,7 +473,7 @@ static int init()
         auto level = severity_from_string(log_verbose, nitro::log::severity_level::info);
         rrl::log::set_min_severity_level(level);
 
-        rrl::logging::info() << "[Score-P] Initalising RRL";
+        rrl::logging::info() << "[Score-P] Initialising RRL";
 
         rrl::control_center::_instance_.reset(new rrl::control_center());
         rrl::logging::debug() << "[Score-P] Init Done";
@@ -487,7 +487,7 @@ static int init()
     }
 }
 
-/** This function is called form scorep after MPI_Init() comunication is called.
+/** This function is called form Score-P after MPI_Init() communication is called.
  *
  */
 static void init_mpp()
@@ -575,9 +575,10 @@ static uint32_t get_event_functions(
 
     registered_functions[SCOREP_EVENT_EXIT_REGION] =
         (SCOREP_Substrates_Callback) scorep::callback::event::exit_regionCb;
-
+#ifdef OA_ENABLED
     registered_functions[SCOREP_EVENT_GENERIC_COMMAND] =
         (SCOREP_Substrates_Callback) scorep::callback::event::generic_commandCb;
+#endif
 
     registered_functions[SCOREP_EVENT_TRIGGER_PARAMETER_INT64] =
         (SCOREP_Substrates_Callback) scorep::callback::event::user_parameter_intCb;
@@ -609,7 +610,7 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
                                  "-----------------------------------------------------------";
 
         rrl::logging::error() << "[Score-P Interface] "
-                                 "SCOREP_SubstratePluginCallbacks size missmatch. The plugin ";
+                                 "SCOREP_SubstratePluginCallbacks size mismatch. The plugin ";
 
         rrl::logging::error() << "[Score-P Interface] "
                                  "knows more calls than this version of Score-P provides. ";
@@ -618,7 +619,7 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
                                  "This might lead to problems, including program crashes and ";
 
         rrl::logging::error() << "[Score-P Interface] "
-                                 "invlaid data";
+                                 "invalid data";
 
         rrl::logging::error() << "[Score-P Interface] "
                                  "-----------------------------------------------------------";
