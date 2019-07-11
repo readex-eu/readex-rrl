@@ -1,8 +1,7 @@
 dist: xenial
 
-language: c++
-compiler:
- - gcc
+language: cpp
+compiler: gcc
  
 addons:
   apt:
