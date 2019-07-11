@@ -7,20 +7,17 @@ addons:
   apt:
     sources:
         - sourceline: "ppa:andreasgocht/scorep"
+        - george-edison55-precise-backports
     packages: 
         - scorep
         - openmpi-common
         - openmpi-bin
         - libopenmpi-dev
-        
-    sources:
-        - george-edison55-precise-backports
-    packages:
         - cmake-data
         - cmake
  
 script:
   - mkdir build
-  - cd buidl
+  - cd build
   - cmake ..
   - make
