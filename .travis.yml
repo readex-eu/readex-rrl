@@ -1,0 +1,27 @@
+dist: xenial
+
+language: c++
+compiler_
+ - gcc
+ 
+addons:
+  apt:
+    sources:
+        - sourceline: "ppa:andreasgocht/scorep"
+    packages: 
+        - scorep
+        - openmpi-common
+        - openmpi-bin
+        - libopenmpi-dev
+        
+    sources_
+        - george-edison55-precise-backports
+    packages:
+        - cmake-data
+        - cmake
+ 
+script:
+  - mkdir build
+  - cd buidl
+  - cmake ..
+  - make
