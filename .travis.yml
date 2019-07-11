@@ -13,7 +13,7 @@ addons:
         - openmpi-bin
         - libopenmpi-dev
         
-    sources_
+    sources:
         - george-edison55-precise-backports
     packages:
         - cmake-data
