@@ -33,12 +33,14 @@ void cal_dummy::exit_region(
 {
 }
 
-std::vector<tmm::parameter_tuple> cal_dummy::calibrate_region(std::uint32_t region_id)
+std::vector<tmm::parameter_tuple> cal_dummy::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
 
-std::vector<tmm::parameter_tuple> cal_dummy::request_configuration(std::uint32_t region_id)
+std::vector<tmm::parameter_tuple> cal_dummy::request_configuration(
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }

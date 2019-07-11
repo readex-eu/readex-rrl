@@ -153,7 +153,7 @@ SCOREP_SamplingSetClass get_sampling_class(SCOREP_SamplingSetHandle handle)
 {
     return scorep::calls->SCOREP_SamplingSetHandle_GetSamplingSetClass(handle);
 }
-}
+} // namespace sampling_set
 
 namespace metrics
 {
@@ -181,8 +181,8 @@ SCOREP_MetricSourceType get_source_type(SCOREP_MetricHandle handle)
 {
     return scorep::calls->SCOREP_MetricHandle_GetSourceType(handle);
 }
-}
-}  // namespace call
+} // namespace metrics
+} // namespace call
 
 namespace callback
 {
@@ -237,7 +237,7 @@ static void exit_regionCb(struct SCOREP_Location *location,
 }
 
 /**
- * called from threading instrumentation adapters before a thread team is forked, e.g., before an
+ * Called from threading instrumentation adapters before a thread team is forked, e.g., before an
  * OpenMP parallel region
  *
  * @param location location which creates this event
@@ -441,7 +441,7 @@ static void user_metric_doubleCb(struct SCOREP_Location *location,
     }
 }
 
-}  // namespce event
+} // namespace event
 
 /*Management Callbacks
  *
@@ -462,7 +462,7 @@ static void new_definition_handle(SCOREP_AnyHandle handle, SCOREP_HandleType typ
     }
 }
 
-/** This function is called form scorep before MPI_Init() is done.
+/** This function is called form Score-P before MPI_Init() is done.
  *
  */
 static int init()
@@ -473,7 +473,7 @@ static int init()
         auto level = severity_from_string(log_verbose, nitro::log::severity_level::info);
         rrl::log::set_min_severity_level(level);
 
-        rrl::logging::info() << "[Score-P] Initalising RRL";
+        rrl::logging::info() << "[Score-P] Initialising RRL";
 
         rrl::control_center::_instance_.reset(new rrl::control_center());
         rrl::logging::debug() << "[Score-P] Init Done";
@@ -487,7 +487,7 @@ static int init()
     }
 }
 
-/** This function is called form scorep after MPI_Init() comunication is called.
+/** This function is called form Score-P after MPI_Init() communication is called.
  *
  */
 static void init_mpp()
@@ -575,9 +575,10 @@ static uint32_t get_event_functions(
 
     registered_functions[SCOREP_EVENT_EXIT_REGION] =
         (SCOREP_Substrates_Callback) scorep::callback::event::exit_regionCb;
-
+#ifdef OA_ENABLED
     registered_functions[SCOREP_EVENT_GENERIC_COMMAND] =
         (SCOREP_Substrates_Callback) scorep::callback::event::generic_commandCb;
+#endif
 
     registered_functions[SCOREP_EVENT_TRIGGER_PARAMETER_INT64] =
         (SCOREP_Substrates_Callback) scorep::callback::event::user_parameter_intCb;
@@ -609,7 +610,7 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
                                  "-----------------------------------------------------------";
 
         rrl::logging::error() << "[Score-P Interface] "
-                                 "SCOREP_SubstratePluginCallbacks size missmatch. The plugin ";
+                                 "SCOREP_SubstratePluginCallbacks size mismatch. The plugin ";
 
         rrl::logging::error() << "[Score-P Interface] "
                                  "knows more calls than this version of Score-P provides. ";
@@ -618,7 +619,7 @@ static void set_callbacks(const SCOREP_SubstratePluginCallbacks *callbacks, size
                                  "This might lead to problems, including program crashes and ";
 
         rrl::logging::error() << "[Score-P Interface] "
-                                 "invlaid data";
+                                 "invalid data";
 
         rrl::logging::error() << "[Score-P Interface] "
                                  "-----------------------------------------------------------";
@@ -646,60 +647,69 @@ static bool get_requirement(SCOREP_Substrates_RequirementFlag flag)
         }
         return true;
     }
-    return true;
+    else if (flag == SCOREP_SUBSTRATES_REQUIREMENT_PREVENT_ASYNC_METRICS)
+    {
+        return false;
+    }
+    else if (flag == SCOREP_SUBSTRATES_REQUIREMENT_PREVENT_PER_HOST_AND_ONCE_METRICS)
+    {
+        return false;
+    }
+    return false;
 }
 
-}  // namespace management
+} // namespace management
 
-}  // namespace callback
+} // namespace callback
 
-}  // namespace scorep
+} // namespace scorep
 
-extern "C" {
-
-static SCOREP_SubstratePluginInfo get_info()
+extern "C"
 {
-    // FIXME Workaround for this bug in glibc:
-    // https://sourceware.org/ml/libc-alpha/2016-06/msg00203.html
-    // Solution here, declare a thread_local variable and access it once.
-    // This seems to solve the problem. ¯\_(ツ)_/¯
-    static thread_local volatile int tls_dummy;
-    tls_dummy++;
 
-    SCOREP_SubstratePluginInfo info;
-    memset(&info, 0, sizeof(SCOREP_SubstratePluginInfo));
+    static SCOREP_SubstratePluginInfo get_info()
+    {
+        // FIXME Workaround for this bug in glibc:
+        // https://sourceware.org/ml/libc-alpha/2016-06/msg00203.html
+        // Solution here, declare a thread_local variable and access it once.
+        // This seems to solve the problem. ¯\_(ツ)_/¯
+        static thread_local volatile int tls_dummy;
+        tls_dummy++;
 
-    info.plugin_version = SCOREP_SUBSTRATE_PLUGIN_VERSION;
+        SCOREP_SubstratePluginInfo info;
+        memset(&info, 0, sizeof(SCOREP_SubstratePluginInfo));
 
-    info.init = scorep::callback::management::init;
+        info.plugin_version = SCOREP_SUBSTRATE_PLUGIN_VERSION;
 
-    info.assign_id = scorep::callback::management::assign_id;
+        info.init = scorep::callback::management::init;
 
-    info.init_mpp = scorep::callback::management::init_mpp;
+        info.assign_id = scorep::callback::management::assign_id;
 
-    info.finalize = scorep::callback::management::finalize;
+        info.init_mpp = scorep::callback::management::init_mpp;
 
-    info.create_location = scorep::callback::management::create_location;
+        info.finalize = scorep::callback::management::finalize;
 
-    info.delete_location = scorep::callback::management::delete_location;
+        info.create_location = scorep::callback::management::create_location;
 
-    info.new_definition_handle = scorep::callback::management::new_definition_handle;
+        info.delete_location = scorep::callback::management::delete_location;
 
-    info.get_event_functions = scorep::callback::management::get_event_functions;
+        info.new_definition_handle = scorep::callback::management::new_definition_handle;
 
-    info.set_callbacks = scorep::callback::management::set_callbacks;
+        info.get_event_functions = scorep::callback::management::get_event_functions;
 
-    info.get_requirement = scorep::callback::management::get_requirement;
+        info.set_callbacks = scorep::callback::management::set_callbacks;
 
-    return info;
-}
+        info.get_requirement = scorep::callback::management::get_requirement;
 
-/** Initial call for Score-P
- */
-SCOREP_SUBSTRATE_PLUGIN_ENTRY(rrl)
-{
-    return get_info();
-}
+        return info;
+    }
+
+    /** Initial call for Score-P
+     */
+    SCOREP_SUBSTRATE_PLUGIN_ENTRY(rrl)
+    {
+        return get_info();
+    }
 }
 
 #endif /*INCLUDE_RRL_INTERFACE_CPP_*/

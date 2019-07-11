@@ -40,10 +40,11 @@ public:
         SCOREP_Location *locationData,
         std::uint64_t *metricValues) override;
 
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(uint32_t) override;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) override;
 
     virtual std::vector<tmm::parameter_tuple> request_configuration(
-        std::uint32_t region_id) override;
+        call_tree::base_node *current_calltree_elem_) override;
     virtual bool keep_calibrating() override;
 
     bool require_experiment_directory() override
@@ -74,24 +75,8 @@ private:
     std::size_t core = hash_fun("CPU_FREQ");
     std::size_t uncore = hash_fun("UNCORE_FREQ");
 
-    std::array<int, 15> available_core_freqs{{2501000,
-        2500000,
-        2400000,
-        2300000,
-        2200000,
-        2100000,
-        2000000,
-        1900000,
-        1800000,
-        1700000,
-        1600000,
-        1500000,
-        1400000,
-        1300000,
-        1200000}};
-
-    std::array<int, 19> available_uncore_freqs{
-        {30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12}};
+    std::vector<int> available_core_freqs;
+    std::vector<int> available_uncore_freqs;
 
     std::random_device rd;
     std::mt19937 gen;
@@ -103,7 +88,8 @@ private:
         add_cal_info::region_event new_region_event,
         std::uint64_t *metricValues);
 };
-}
-}
+} // namespace cal
+} // namespace rrl
 
 #endif /* SRC_CAL_CAL_COLLECT_SCALING_H_ */
+

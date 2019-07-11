@@ -54,6 +54,8 @@ enum calibration_type
     cal_scaling,
     cal_scaling_ref,
     cal_neural_net,
+    cal_qlearn,
+    q_learning_v2,
     cal_dummy
 };
 
@@ -69,9 +71,9 @@ using phase_data_t = std::pair<phases_in_cluster_t,
                                   runtime cluster prediction */
 
 /**The tuning_model_manager base class manages reads and writes
-* to the tuning model.
-*
-*/
+ * to the tuning model.
+ *
+ */
 class tuning_model_manager
 {
 public:
@@ -228,12 +230,22 @@ public:
     virtual bool has_changed() noexcept = 0;
 
     virtual void set_changed(bool) noexcept = 0;
+
+    /**
+     * Gets the corresponding region
+     *
+     * @param region_id
+     * @return
+     */
+    virtual std::string get_name_from_region_id(const std::uint32_t region_id) noexcept = 0;
+
+    virtual std::uint32_t get_id_from_region_name(const std::string region_name) noexcept = 0;
 };
 
 /** This function returns an instance of one of the tuning_model_manager
  * implementations
  */
 std::shared_ptr<tuning_model_manager> get_tuning_model_manager(std::string tuning_model_file_path);
-}
-}
+} // namespace tmm
+} // namespace rrl
 #endif /* INCLUDE_RRL_TUNING_MODEL_MANAGER_HPP_ */

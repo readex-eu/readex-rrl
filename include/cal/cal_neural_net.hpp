@@ -15,9 +15,9 @@
 #include <util/environment.hpp>
 #include <util/log.hpp>
 
+#include <json.hpp>
 #include <read_papi.h>
 #include <readuncore.h>
-#include <json.hpp>
 
 #include <fstream>
 #include <map>
@@ -44,10 +44,11 @@ public:
         SCOREP_Location *locationData,
         std::uint64_t *metricValues) override;
 
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(uint32_t region_id) override;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) override;
 
     virtual std::vector<tmm::parameter_tuple> request_configuration(
-        std::uint32_t region_id) override;
+        call_tree::base_node *current_calltree_elem_) override;
     virtual bool keep_calibrating() override;
     bool require_experiment_directory() override
     {
@@ -58,13 +59,19 @@ private:
     bool initialised = false;
 
     nlohmann::json counter;
-    nlohmann::json counter_order;
-    nlohmann::json boxes_ordered;
+    nlohmann::json counter_data;
 
     std::vector<tmm::parameter_tuple> default_config;
 
     uncore::read_uncore uncore;
     papi::read_papi papi;
+
+    std::unordered_map<std::vector<tmm::simple_callpath_element>, papi::values> papi_measurment_map;
+    std::unordered_map<std::vector<tmm::simple_callpath_element>, uncore::box_values>
+        uncore_measurment_map;
+    std::unordered_map<std::vector<tmm::simple_callpath_element>,
+        std::chrono::high_resolution_clock::time_point>
+        time_measurment_map;
 
     std::vector<std::map<std::string, long long>> old_papi_values;
     uncore::box_values old_uncore_values;
@@ -72,16 +79,20 @@ private:
 
     std::unique_ptr<tensorflow::modell> tf_modell;
 
-    std::uint32_t calibrat_region_id = -1;
-    std::uint32_t calibrat_region_id_count = 0;
+    using rts_id = std::vector<tmm::simple_callpath_element>;
+
+    std::vector<tmm::simple_callpath_element> current_callpath;
+
+    std::unordered_map<std::vector<tmm::simple_callpath_element>, std::vector<tmm::parameter_tuple>>
+        calibrated_regions;
+    std::unordered_map<std::vector<tmm::simple_callpath_element>, rts_id> callpath_rts_map;
 
     bool calibrating = false;
+    bool collect_counter = false;
 
-    std::unordered_map<std::uint32_t, std::vector<tmm::parameter_tuple>> calibrated_regions;
-
-    void calc_counter_values();
+    std::vector<tmm::parameter_tuple> calc_counter_values();
 };
-}
-}
+} // namespace cal
+} // namespace rrl
 
 #endif /* INCLUDE_CAL_CAL_NEURAL_NET_HPP_ */

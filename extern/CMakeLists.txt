@@ -67,7 +67,7 @@ target_include_directories(scorep_plugin_cxx_wrapper-lib
 
 add_library(cereal-lib INTERFACE)
 target_include_directories(cereal-lib
-    INTERFACE
+    SYSTEM INTERFACE 
         ${CMAKE_CURRENT_LIST_DIR}/cereal/include
 )
 

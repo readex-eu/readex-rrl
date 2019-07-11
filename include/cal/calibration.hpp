@@ -10,6 +10,7 @@
 
 #include <memory>
 
+#include <rrl/call_tree/base_node.hpp>
 #include <rrl/metric_manager.hpp>
 #include <scorep/scorep.hpp>
 #include <tmm/tuning_model_manager.hpp>
@@ -64,7 +65,8 @@ public:
      * @return the configuration to be applied
      *
      */
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(std::uint32_t region_id) = 0;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) = 0;
 
     /** This funktion returns the configuration for a calbrated region.
      *
@@ -74,7 +76,8 @@ public:
      * @param region_id region id of the region for which the new configruation shall be stored.
      * @return the configuration to be stored
      */
-    virtual std::vector<tmm::parameter_tuple> request_configuration(std::uint32_t region_id) = 0;
+    virtual std::vector<tmm::parameter_tuple> request_configuration(
+        call_tree::base_node * current_calltree_elem_) = 0;
 
     /** tells the rts handler that the calibration is not done yet. Therefore no result can be
      * requested. Moreover another call to calibrate_region() is neccessary.

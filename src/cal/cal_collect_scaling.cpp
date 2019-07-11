@@ -20,6 +20,39 @@ namespace cal
 cal_collect_scaling::cal_collect_scaling(std::shared_ptr<metric_manager> mm)
     : calibration(), mm_(mm), gen(rd())
 {
+	auto core_freq_list = rrl::environment::get("AVAILABLE_CORE_FREQUNECIES", "");
+	auto uncore_freq_list = rrl::environment::get("AVAILABLE_UNCORE_FREQUNECIES", "");
+    auto freq_sep = environment::get("FREQUNECIES_SEP", ",", true);
+    if(core_freq_list == "")
+    {
+    	logging::fatal("CAL_COLLECT_SCALING") << "No Core Frequencies specified, please set AVAILABLE_CORE_FREQUNECIES";
+    }
+    if(uncore_freq_list == "")
+    {
+    	logging::fatal("CAL_COLLECT_SCALING") << "No Uncore Frequencies specified, please set AVAILABLE_UNCORE_FREQUNECIES";
+    }
+
+    std::string freq_token;
+
+    std::istringstream core_freq_iss(core_freq_list);
+    while (std::getline(core_freq_iss, freq_token, freq_sep[0]))
+    {
+    	auto freq = std::stoi(freq_token);
+    	logging::info("CAL_COLLECT_SCALING") << "add core frequnencie: " << freq;
+		available_core_freqs.push_back(freq);
+
+    }
+    logging::info("CAL_COLLECT_SCALING") << "added " << available_core_freqs.size() << " core freqs";
+
+    std::istringstream uncore_freq_iss(uncore_freq_list);
+    while (std::getline(uncore_freq_iss, freq_token, freq_sep[0]))
+    {
+    	auto freq = std::stoi(freq_token);
+    	logging::info("CAL_COLLECT_SCALING") << "add uncore frequnencie: " << freq;
+		available_uncore_freqs.push_back(freq);
+    }
+    logging::info("CAL_COLLECT_SCALING") << "added " << available_uncore_freqs.size() << " uncore freqs";
+
     setting_dis[core] = std::uniform_int_distribution<>(0, available_core_freqs.size() - 1);
     setting_dis[uncore] = std::uniform_int_distribution<>(0, available_uncore_freqs.size() - 1);
 
@@ -164,15 +197,16 @@ void cal_collect_scaling::exit_region(
     }
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_scaling::calibrate_region(uint32_t unsignedInt)
+std::vector<tmm::parameter_tuple> cal_collect_scaling::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     logging::trace("CAL_COLLECT_SCALING") << "calibration invoked";
 
     std::vector<tmm::parameter_tuple> curent_setting;
     current_core_freq = available_core_freqs[setting_dis[core](gen)];
     current_uncore_freq = available_uncore_freqs[setting_dis[uncore](gen)];
-    logging::trace("CAL_COLLECT_SCALING") << "current_core_freq: \n" << current_core_freq ;
-    logging::trace("CAL_COLLECT_SCALING") << "current_uncore_freq: \n" << current_uncore_freq ;
+    logging::trace("CAL_COLLECT_SCALING") << "current_core_freq: \n" << current_core_freq;
+    logging::trace("CAL_COLLECT_SCALING") << "current_uncore_freq: \n" << current_uncore_freq;
 
     curent_setting.push_back(tmm::parameter_tuple(core, current_core_freq));
     curent_setting.push_back(tmm::parameter_tuple(uncore, current_uncore_freq));
@@ -183,7 +217,7 @@ std::vector<tmm::parameter_tuple> cal_collect_scaling::calibrate_region(uint32_t
 }
 
 std::vector<tmm::parameter_tuple> cal_collect_scaling::request_configuration(
-    std::uint32_t region_id)
+    call_tree::base_node *	current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }

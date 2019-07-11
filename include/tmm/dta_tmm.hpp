@@ -62,6 +62,9 @@ public:
     virtual bool has_changed() noexcept override;
     virtual void set_changed(bool) noexcept override;
 
+    virtual std::string get_name_from_region_id(const std::uint32_t region_id) noexcept override;
+    virtual std::uint32_t get_id_from_region_name(const std::string region_name) noexcept override;
+
 private:
     std::unordered_map<std::vector<simple_callpath_element>, std::vector<parameter_tuple>>
         configurations_;
@@ -69,10 +72,13 @@ private:
     std::unordered_set<std::uint32_t> siginificant_regions_;
     std::map<std::uint32_t, size_t> amount_additional_identifiers;
 
+    std::unordered_map<std::string, std::uint32_t> reg_name_reg_id_map;
+    std::unordered_map<std::uint32_t, std::string> reg_id_reg_name_map;
+
     bool check_for_root = true;
     calibration_type cal_type;
     bool changed = false;
 };
-}
-}
+} // namespace tmm
+} // namespace rrl
 #endif

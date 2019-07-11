@@ -8,10 +8,10 @@
 #include <cal/cal_collect_scaling_ref.hpp>
 #include <util/environment.hpp>
 
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <algorithm>
 #include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace rrl
 {
@@ -24,8 +24,7 @@ namespace cal
  * It just measures runtimes.
  *
  */
-cal_collect_scaling_ref::cal_collect_scaling_ref(std::shared_ptr<metric_manager> mm)
-    : calibration(), mm_(mm)
+cal_collect_scaling_ref::cal_collect_scaling_ref(std::shared_ptr<metric_manager> mm) : calibration()
 {
     save_filename = rrl::environment::get("COUNTER_RESULT", "");
     if (save_filename == "")
@@ -115,21 +114,6 @@ cal_collect_scaling_ref::~cal_collect_scaling_ref()
 
 void cal_collect_scaling_ref::init_mpp()
 {
-    auto metric_name = rrl::environment::get("CAL_ENERGY", "");
-    if (metric_name == "")
-    {
-        logging::error("cal_collect_scaling_ref") << "no energy metric specified.";
-    }
-
-    energy_metric_id = mm_->get_metric_id(metric_name);
-    if (energy_metric_id != -1)
-    {
-        energy_metric_type = mm_->get_metric_type(metric_name);
-    }
-    else
-    {
-        logging::error("cal_collect_scaling_ref") << "metric \"" << metric_name << "\" not found!";
-    }
 }
 
 void cal_collect_scaling_ref::enter_region(
@@ -167,7 +151,8 @@ void cal_collect_scaling_ref::exit_region(
     }
 }
 
-std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(uint32_t unsignedInt)
+std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(
+    call_tree::base_node *current_calltree_elem_)
 {
     logging::trace("cal_collect_scaling_ref") << "calibration invoked";
 
@@ -175,7 +160,7 @@ std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::calibrate_region(uint
 }
 
 std::vector<tmm::parameter_tuple> cal_collect_scaling_ref::request_configuration(
-    std::uint32_t region_id)
+    call_tree::base_node *current_calltree_elem_)
 {
     return std::vector<tmm::parameter_tuple>();
 }
@@ -207,5 +192,5 @@ bool cal_collect_scaling_ref::keep_calibrating()
 {
     return true;
 }
-}
-} /* namespace reade_uncore */
+} // namespace cal
+} // namespace rrl

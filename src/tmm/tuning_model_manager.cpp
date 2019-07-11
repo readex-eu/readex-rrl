@@ -27,5 +27,5 @@ std::shared_ptr<tuning_model_manager> get_tuning_model_manager(std::string tunin
     }
     return s;
 }
-}
-}
+} // namespace tmm
+} // namespace rrl

@@ -32,9 +32,10 @@ public:
     virtual void exit_region(SCOREP_RegionHandle region_handle,
         SCOREP_Location *locationData,
         std::uint64_t *metricValues) override;
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(std::uint32_t region_id) override;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) override;
     virtual std::vector<tmm::parameter_tuple> request_configuration(
-        std::uint32_t region_id) override;
+        call_tree::base_node *current_calltree_elem_) override;
     virtual bool keep_calibrating() override;
     bool require_experiment_directory() override
     {

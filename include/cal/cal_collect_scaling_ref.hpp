@@ -43,10 +43,11 @@ public:
         SCOREP_Location *locationData,
         std::uint64_t *metricValues) override;
 
-    virtual std::vector<tmm::parameter_tuple> calibrate_region(uint32_t) override;
+    virtual std::vector<tmm::parameter_tuple> calibrate_region(
+        call_tree::base_node *current_calltree_elem_) override;
 
     virtual std::vector<tmm::parameter_tuple> request_configuration(
-        std::uint32_t region_id) override;
+        call_tree::base_node *current_calltree_elem_) override;
     virtual bool keep_calibrating() override;
 
     bool require_experiment_directory() override
@@ -56,10 +57,6 @@ public:
 
 private:
     bool initialised;
-
-    std::shared_ptr<metric_manager> mm_;
-    int energy_metric_id = -1;
-    SCOREP_MetricValueType energy_metric_type = SCOREP_INVALID_METRIC_VALUE_TYPE;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> last_event;
     std::uint32_t old_region_id;
@@ -75,7 +72,7 @@ private:
         add_cal_info::region_event new_region_event,
         std::uint64_t *metricValues);
 };
-}
-}
+} // namespace cal
+} // namespace rrl
 
 #endif /* SRC_CAL_COLLECT_SCALING_REF_H_ */

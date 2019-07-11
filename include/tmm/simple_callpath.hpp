@@ -32,14 +32,14 @@ struct simple_callpath_element
      *
      */
     simple_callpath_element(std::uint32_t region_id, identifier_set id_set, bool calibrate = false)
-        : region_id(region_id), id_set(id_set)
+        : region_id(region_id), id_set(id_set), calibrate(calibrate)
     {
     }
 
     /** Constructs an empty simple_callpath_element
      *
      */
-    simple_callpath_element() : region_id(0), id_set(identifier_set())
+    simple_callpath_element() : region_id(0), id_set(identifier_set()), calibrate(false)
     {
     }
 
@@ -57,6 +57,7 @@ struct simple_callpath_element
 
     std::uint32_t region_id;
     identifier_set id_set;
+    bool calibrate;
 };
 
 inline std::ostream &operator<<(std::ostream &s, const simple_callpath_element &elem)
@@ -73,13 +74,12 @@ inline std::ostream &operator<<(std::ostream &s, const std::vector<simple_callpa
     }
     return s;
 }
-}
-}
+} // namespace tmm
+} // namespace rrl
 
 namespace std
 {
-template <>
-struct hash<rrl::tmm::simple_callpath_element>
+template <> struct hash<rrl::tmm::simple_callpath_element>
 {
     size_t inline operator()(const rrl::tmm::simple_callpath_element &scpe) const
     {
@@ -89,8 +89,7 @@ struct hash<rrl::tmm::simple_callpath_element>
     }
 };
 
-template <>
-struct hash<std::vector<rrl::tmm::simple_callpath_element>>
+template <> struct hash<std::vector<rrl::tmm::simple_callpath_element>>
 {
     size_t inline operator()(const std::vector<rrl::tmm::simple_callpath_element> &scp) const
     {
@@ -100,6 +99,6 @@ struct hash<std::vector<rrl::tmm::simple_callpath_element>>
         return std::hash<std::string>{}(s);
     }
 };
-}
+} // namespace std
 
 #endif /* INCLUDE_TMM_SIMPLE_CALLPATH_HPP_ */

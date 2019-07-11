@@ -19,6 +19,16 @@ if(NOT DISABLE_CALIBRATION)
     ADD_DEFINITIONS(-DHAVE_CALIBRATION)
 endif()
 
+option(CALIBRATION_Q_LEARN "Q-Learning calibration mechanisms" ON)
+if(CALIBRATION_Q_LEARN)
+    ADD_DEFINITIONS(-DHAVE_CALIBRATION_Q_LEARN)
+endif()
+
+option(ENABLE_OA "Enable Online Access, requires READEX Score-P version" OFF)
+if(ENABLE_OA)
+    ADD_DEFINITIONS(-DOA_ENABLED)
+endif()
+
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 
 find_package(MPI)
@@ -48,7 +58,11 @@ add_subdirectory(extern)
 
 include_directories(./include)
 
-SET(RRL src/rrl/cm/cm_base.cpp
+add_library(scorep_substrate_rrl SHARED)
+
+#RRL
+target_sources(scorep_substrate_rrl PRIVATE
+        src/rrl/cm/cm_base.cpp
         src/rrl/cm/cm_no_reset.cpp
         src/rrl/cm/cm_reset.cpp
         src/rrl/call_tree/add_id_node.cpp
@@ -68,37 +82,54 @@ SET(RRL src/rrl/cm/cm_base.cpp
 	    src/rrl/user_parametersF.cpp
         )
 
+# Calibration
+target_sources(scorep_substrate_rrl PRIVATE
+        src/cal/cal_dummy.cpp
+        src/cal/calibration.cpp
+)
 if (NOT DISABLE_CALIBRATION)
-    SET(CAL src/cal/cal_collect_all.cpp
-            src/cal/cal_collect_fix.cpp
-            src/cal/cal_collect_scaling.cpp
-            src/cal/cal_collect_scaling_ref.cpp
-            src/cal/cal_dummy.cpp
-            src/cal/cal_neural_net.cpp
-            src/cal/calibration.cpp            
-            src/cal/tensorflow_model.cpp
-        )
-else()
-    SET(CAL src/cal/cal_dummy.cpp
-            src/cal/calibration.cpp
-        )
+    message(STATUS "Build with Calibration")
+    target_sources(scorep_substrate_rrl PRIVATE
+        src/cal/cal_collect_all.cpp
+        src/cal/cal_qlearn.cpp
+        src/cal/cal_collect_fix.cpp
+        src/cal/cal_collect_scaling.cpp
+        src/cal/cal_collect_scaling_ref.cpp
+        src/cal/cal_neural_net.cpp
+        src/cal/tensorflow_model.cpp
+    )
+endif()
+if (CALIBRATION_Q_LEARN)
+    message(STATUS "Build with Q-Learning")
+    target_sources(scorep_substrate_rrl PRIVATE
+        src/cal/q_learning_v2.cpp
+    )
 endif()
 
-SET(VISUALIZATION src/visualization/scorep_substrate_rrl.cpp)
 
-SET(SCOREP src/scorep/scorep.cpp
-        )        
-        
-SET(TMM src/tmm/identifiers.cpp
+# VISUALIZATION
+target_sources(scorep_substrate_rrl PRIVATE
+        src/visualization/scorep_substrate_rrl.cpp
+)
+
+# SCOREP
+target_sources(scorep_substrate_rrl PRIVATE
+        src/scorep/scorep.cpp
+)        
+
+#TMM
+target_sources(scorep_substrate_rrl PRIVATE        
+        src/tmm/identifiers.cpp
         src/tmm/tuning_model.cpp
         src/tmm/dta_tmm.cpp
         src/tmm/rat_tmm.cpp
-        src/tmm/tuning_model_manager.cpp)
+        src/tmm/tuning_model_manager.cpp
+)
         
 SET(PLUGIN_INCLUDES include/scorep/rrl_tuning_plugins.h)
 
 SET(RRL_INCLUDES    include/rrl/user_parameters.h
-		    include/rrl/user_parameters.inc) 
+		            include/rrl/user_parameters.inc) 
 
 SET(UTIL_INCLUDES   include/util/common.hpp)
 
@@ -111,8 +142,6 @@ SET(TMM_INCLUDES    include/tmm/callpath.hpp
                     include/tmm/simple_callpath.hpp
                     include/tmm/tuning_model.hpp
                     include/tmm/tuning_model_manager.hpp)
-        
-SET(SOURCES ${RRL} ${CAL} ${SCOREP} ${TMM} ${VISUALIZATION} ${READ_UNCORE_SRC} ${READ_PAPI_SRC})
 
 execute_process(
   COMMAND git rev-parse HEAD
@@ -144,7 +173,6 @@ if(DOXYGEN_FOUND)
 )
 endif(DOXYGEN_FOUND)
 
-add_library(scorep_substrate_rrl SHARED ${SOURCES})
 target_compile_definitions(scorep_substrate_rrl PRIVATE GIT_REV="${GIT_REV}")
 
 target_link_libraries(scorep_substrate_rrl
@@ -176,10 +204,10 @@ target_compile_features(scorep_substrate_rrl PUBLIC cxx_std_14)
 target_compile_options(scorep_substrate_rrl PRIVATE $<$<CONFIG:Debug>:-Wall -g -O3 -DRRL_DEBUG -Wl,-z,defs -fno-omit-frame-pointer -fopenmp>)
 
 install(TARGETS scorep_substrate_rrl EXPORT ${targets_export_name} LIBRARY DESTINATION lib)
-install(FILES ${PLUGIN_INCLUDES} DESTINATION include/scorep)
-install(FILES ${TMM_INCLUDES} DESTINATION include/tmm)
-install(FILES ${RRL_INCLUDES} DESTINATION include/rrl)
-install(FILES ${UTIL_INCLUDES} DESTINATION include/util)
+install(FILES ${PLUGIN_INCLUDES} DESTINATION include/rrl/scorep)
+install(FILES ${TMM_INCLUDES} DESTINATION include/rrl/tmm)
+install(FILES ${RRL_INCLUDES} DESTINATION include/rrl/rrl)
+install(FILES ${UTIL_INCLUDES} DESTINATION include/rrl/util)
 
 add_subdirectory(tests)
 add_subdirectory(tmviewer)

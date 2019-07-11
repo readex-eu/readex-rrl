@@ -11,6 +11,10 @@
 #include <cal/cal_collect_scaling.hpp>
 #include <cal/cal_collect_scaling_ref.hpp>
 #include <cal/cal_neural_net.hpp>
+#include <cal/cal_qlearn.hpp>
+#endif
+#ifdef HAVE_CALIBRATION_Q_LEARN
+#include <cal/q_learning_v2.hpp>
 #endif
 #include <cal/cal_dummy.hpp>
 #include <cal/calibration.hpp>
@@ -50,6 +54,19 @@ std::shared_ptr<calibration> get_calibration(
         logging::info("CAL") << "using CAL_MODULE cal_neural_net";
         return std::make_shared<cal_neural_net>(mm);
     }
+    else if (cal_module == tmm::cal_qlearn)
+    {
+        logging::info("CAL") << "using CAL_MODULE cal_qlearn";
+        return std::make_shared<cal_qlearn>(mm);
+    }
+    else
+#endif
+#ifdef HAVE_CALIBRATION_Q_LEARN
+        if (cal_module == tmm::q_learning_v2)
+    {
+        logging::info("CAL") << "using CAL_MODULE q_learning_v2";
+        return std::make_shared<q_learning_v2>(mm);
+    }
     else
 #endif
         if (cal_module == tmm::cal_dummy)
@@ -64,5 +81,5 @@ std::shared_ptr<calibration> get_calibration(
         return std::make_shared<cal_dummy>();
     }
 }
-}
-}
+} // namespace cal
+} // namespace rrl
