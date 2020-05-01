@@ -49,12 +49,18 @@ namespace scorep
 {
 static size_t plugin_id;
 static const SCOREP_SubstratePluginCallbacks *calls;
+bool mpi_enabled = false;
 
 namespace call
 {
 std::string experiment_dir_name()
 {
     return std::string(scorep::calls->SCOREP_GetExperimentDirName());
+}
+
+std::string paradigm_handle_get_name(SCOREP_ParadigmHandle handle)
+{
+    return std::string(scorep::calls->SCOREP_ParadigmHandle_GetName(handle));
 }
 
 std::string region_handle_get_name(SCOREP_RegionHandle handle)
@@ -459,6 +465,16 @@ static void new_definition_handle(SCOREP_AnyHandle handle, SCOREP_HandleType typ
     {
         rrl::exception::print_uncaught_exception(e, "new_definition_handle");
         return;
+    }
+
+    if(type == SCOREP_HANDLE_TYPE_PARADIGM)
+    {
+        //MPI/OMP hybrid applications first register an MPI handle, then an OpenMP handle
+        //instead of keeping track of the handle, we just say that MPI is enabled if an MPI handle is registered
+        //at any point during initialisation
+        SCOREP_ParadigmHandle temp_handle = (SCOREP_ParadigmHandle)handle;
+        if(scorep::call::paradigm_handle_get_name(temp_handle) == "MPI")
+            scorep::mpi_enabled = true;
     }
 }
 

@@ -13,12 +13,31 @@
 #include <util/log.hpp>
 
 #include <array>
+#include <json.hpp>
+#include <mpi.h>
 #include <random>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <json.hpp>
+
+namespace std
+{
+// required hasher for unordered maps with array keys like e_state_state_map
+template <class T, size_t N> struct hash<std::array<T, N>>
+{
+    auto operator()(const std::array<T, N> &key) const
+    {
+        std::hash<T> hasher;
+        size_t result = 0;
+        for (T t : key)
+        {
+            result = result * 31 + hasher(t); // 31 to decrease possibility of collisions
+        }
+        return result;
+    }
+};
+} // namespace std
 
 namespace rrl
 {
@@ -66,6 +85,13 @@ private:
     nlohmann::json json;
 
     int rank = 0;
+    std::vector<MPI_Win> rma_win_array;
+    std::vector<void*> win_base_addr_array;
+    MPI_Win writing_index_win;
+    uint32_t *writing_index_addr;
+    uint32_t reading_index = -1;
+    int win_ring_buf_size;
+    int e_state_size;
 
     std::hash<std::string> hash_fun;
     std::size_t core = hash_fun("CPU_FREQ");
@@ -95,6 +121,16 @@ private:
     std::unordered_map<rts_id, state_t> last_states;
     std::unordered_map<rts_id, action_t> last_actions;
 
+    std::unordered_map<state_t, state_t>
+        e_state_state_map; // this maps a given E-State to its corresponding center state on the
+                           // original state map
+    std::unordered_map<rts_id, state_vector<double>> e_state_energy_maps;
+    std::unordered_map<rts_id, state_vector<int>> e_state_hit_counts;
+    std::unordered_map<rts_id, state_vector<action_vector<double>>> e_state_Q_map;
+    std::unordered_map<rts_id, state_t> current_e_states;
+    std::unordered_map<rts_id, state_t> last_e_states;
+    std::unordered_map<rts_id, action_t> e_state_last_actions;
+
     double alpha = 0.1;
     double gamma = 0.5;
     double epsilon = 0.25;
@@ -104,6 +140,15 @@ private:
 
     void initalise_q_array(state_vector<action_vector<double>> &q_array);
     void initalise_state_action(const rts_id &rts);
+
+    void define_e_state_mapping();
+    void initialise_e_state_q_array(state_vector<action_vector<double>> &e_state_q_array);
+    void initialise_e_state_action(const rts_id &rts);
+    bool is_inside_e_state(const state_t &state, const state_t &e_state);
+    void update_e_state_energy_vals(const rts_id &rts, const state_vector<double> &energy_map);
+    void update_e_state_q_vals(const rts_id &rts);
+    std::string build_rma_message(const rts_id &rts, const state_t &e_state);
+    std::pair<rts_id, state_t> decode_rma_message(const std::string &rma_msg);
 
     std::tuple<q_learning_v2::action_t, double> max_Q(
         const state_vector<action_vector<double>> &q_array,
@@ -121,6 +166,10 @@ private:
 
     double calculate_reward(
         const state_vector<double> &energy_map, const state_t old_state, const state_t new_state);
+    void mpi_setup();
+    void update_q_values_for_state(const state_vector<double> &energy_map,
+        const state_t &current_state,
+        state_vector<action_vector<double>> &q_map);
 };
 } // namespace cal
 } // namespace rrl

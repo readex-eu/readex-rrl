@@ -23,6 +23,8 @@ extern "C" {
  */
 namespace scorep
 {
+extern bool mpi_enabled;
+
 namespace call
 {
 
@@ -42,6 +44,14 @@ std::string experiment_dir_name();
  * @return name of the region
  *
  */
+
+/**
+ * Returns the name of the given paradigm handle.
+ * @param handle SCOREP_ParadigmHandle
+ * @return name of the paradigm
+ */
+std::string paradigm_handle_get_name(SCOREP_ParadigmHandle handle);
+
 std::string region_handle_get_name(SCOREP_RegionHandle handle);
 
 /** Retruns the id of a SCOREP_RegionHandle.
